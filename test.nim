@@ -4,10 +4,9 @@ import unicode
 import accent
 
 
-var s = "Việt Nam"
-
 #echo separate("tướng")
 
+var s = "Việt Nam"
 var x = VOWELS.runeAt(3)
 echo x
 echo getAccentChar(x)
