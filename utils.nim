@@ -56,7 +56,7 @@ proc toUpper*(s: string): string {.noSideEffect, procvar.} =
     i += c.len
 
 
-proc appendComps(comps: var Components, c: Rune) =
+proc appendComps*(comps: var Components, c: Rune) =
   ## Append a character to `comps` following this rule: a vowel is added to the
   ## vowel part if there is no last consonant, else to the last consonant part;
   ## a consonant is added to the first consonant part if there is no vowel, and
@@ -71,7 +71,6 @@ proc appendComps(comps: var Components, c: Rune) =
   ## >>> transform(['c', 'o', 'n'], '+o')
   ## ['c', 'o', 'no']
   
-  var pos: int  
   if c.isVowel:
     if comps.lastConsonant == "":
       # pos = 1

@@ -20,8 +20,11 @@ type
     lastConsonant*: string
 
 
-proc newComponents*(f: string = "", v: string = "", l: string = ""): Components =
+proc newComponents*(f: string = "", v: string = "", la: string = ""): Components =
   new(result)
   result.firstConsonant = f
   result.vowel = v
-  result.lastConsonant = l
+  result.lastConsonant = la
+
+proc `$`*(c: Components): string =
+  return "[" & c.firstConsonant & ", " & c.vowel & ", " & c.lastConsonant & "]"  

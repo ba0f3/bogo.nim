@@ -141,11 +141,11 @@ proc removeMarkString(s: string): string =
     i += c.len
   result.setLen(i)
     
-proc strip(s: string): string =
+proc strip*(s: string): string =
   ## Strip a string of all marks and accents.
   return s.removeAccentString.removeMarkString
 
-proc isValidMark(comps: Components, marks: string): bool =
+proc isValidMark*(comps: Components, marks: string): bool =
   ## Check whether the mark given by mark_trans is valid to add to the components
   if marks == "*_":
     return true
