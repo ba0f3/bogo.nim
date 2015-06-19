@@ -107,7 +107,6 @@ proc isValidSoundTuple(c: Components, finalForm = true): bool =
     return c.hasValidConsonants and c.hasValidVowelNonFinal
 
 proc isValidCombination(c: Components, finalForm = true): bool =
-  echo c
   return c.isValidSoundTuple(finalForm)
     
 proc isValidString*(s: string, finalForm = true): bool =

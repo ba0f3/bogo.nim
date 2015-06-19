@@ -1,3 +1,5 @@
+import strtabs
+
 type
   Accent* = enum
     NONE
@@ -25,6 +27,7 @@ type
     vowel*: string
     lastConsonant*: string
 
+  InputMethod* = StringTableRef
 
 proc newComponents*(f: string = "", v: string = "", la: string = ""): Components =
   new(result)
