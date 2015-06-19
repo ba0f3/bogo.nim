@@ -3,7 +3,35 @@ import strutils
 import types
 
 const  
-  VOWELS* = "àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
+  VOWELS* = r"àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
+
+
+proc `{}`*(s: string, x: int): Rune {.noSideEffect, inline.} =
+  ## slice operation for strings.
+  if x > s.runeLen-1:
+    return Rune(0)
+  var i = 0
+  for c in s.runes:
+    if i == x:
+      return c
+    i.inc
+  
+proc `{}`*(s: string, x: Slice[int]): string {.noSideEffect, inline.} =
+  ## slice operation for unicode strings. 
+  result = ""
+  var i = 0
+  for c in s.runes:
+    if i >= x.a and i <= x.b:
+      result.add($c)
+    i.inc
+
+proc ulen*(s: string): int {.noSideEffect, inline.} =
+  return s.runeLen
+
+proc u*(s: string): Rune {.compileTime, noSideEffect.} =
+  ## Constructor of a literal Rune from single char raw string.
+  ## u"ô" == u(r"ô")
+  s{0}
 
 proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
   var c = c.toLower  
@@ -11,7 +39,7 @@ proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
   for r in s.runes:
     if r == c:
       return i
-    i += 1
+    i.inc
   return -1
 
 proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
@@ -20,16 +48,7 @@ proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
       return true
   return false
 
-proc runeAt*(s: string, i: int): Rune {.inline.} =
-  var j = 0
-  for r in s.runes:
-    if j == i:
-      return r
-    j += 1    
-
-#proc `[]`*(s: string, i: int): Rune =
-#  discard    
-    
+   
 proc lastRune*(s: string): Rune {.noSideEffect.} =
   for r in s.runes:
     result = r
@@ -96,11 +115,10 @@ proc separate*(s: string): Components =
   ## ['ohmyfkingg','o','d']
   
   proc atomicSeparate(s, lastChars: string, lastIsVowel: bool): array[0..1, string] =
-    if s.len == 0 or (lastIsVowel != s.runeAt(s.runeLen-1).isVowel):
+    if s.len == 0 or (lastIsVowel != s{s.runeLen-1}.isVowel):
       result = [s, lastChars]
     else:
-      result = atomicSeparate(s[0..s.runeLen-2], s[s.runeLen-1] & lastChars, lastIsVowel)
-    echo result[1]
+      result = atomicSeparate(s{0..s.runeLen-2}, $s{s.runeLen-1} & lastChars, lastIsVowel)
 
   new(result)
   var tmp = atomicSeparate(s, "", false)

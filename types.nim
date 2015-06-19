@@ -14,6 +14,12 @@ type
     HORN
     HAT
 
+  Action* = enum
+    ADD_CHAR
+    ADD_ACCENT
+    ADD_MARK
+    UNDO
+
   Components* = ref object of RootObj
     firstConsonant*: string
     vowel*: string

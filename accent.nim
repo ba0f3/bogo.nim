@@ -32,7 +32,7 @@ proc addAccentChar*(c: Rune, accent: Accent): Rune =
   var index = VOWELS.indexOf(ch)
   if index >= 0:
     index = index - index mod 6 + 5
-    ch = VOWELS.runeAt(index - ord(accent))
+    ch = VOWELS{index - ord(accent)}
   if isUpper:
     result = ch.toUpper
   else:
@@ -45,16 +45,9 @@ proc removeAccentChar*(c: Rune): Rune =
 proc removeAccentString*(s: string): string =
   ## Remove all accent from a whole string.
   var i = 0
-  result = newString(s.len)
+  result = ""
   for r in s.runes:
-    if r.int == 0:
-      continue
-    var c = r.removeAccentChar.toUTF8
-    for j in 0..c.len-1:
-      var x = c[j]
-      result[i+j] = x
-    i += c.len
-  result.setLen(i) 
+    result.add($r.removeAccentChar)
 
 proc addAccent*(comps: var Components, accent: Accent) =
   ## Add accent to the given components.
@@ -66,16 +59,16 @@ proc addAccent*(comps: var Components, accent: Accent) =
   else:
     var rawString = vowel.removeAccentString.toLower
     
-    var index = max(rawString.indexOf("ê".runeAt(0)), rawString.indexOf("ơ".runeAt(0)))
+    var index = max(rawString.indexOf(u"ê"), rawString.indexOf(u"ơ"))
     var newVowel = ""
     if index >= 0:
       var i = 0
       for c in vowel.runes:
         newVowel &= $c
-        i += 1
+        i.inc
         if i >= index:
           break
-      newVowel &= $addAccentChar(vowel.runeAt(index), accent)
+      newVowel &= $addAccentChar(vowel{index}, accent)
           
       if vowel.runeLen-1 > index:
         var i = 0
@@ -83,10 +76,10 @@ proc addAccent*(comps: var Components, accent: Accent) =
           if i >= index:
             newVowel &= $c
     elif vowel.runeLen == 1 or (vowel.runeLen == 2 and comps.lastConsonant == ""):
-      var c = vowel.runeAt(0)
+      var c = vowel{0}
       newVowel = $c.addAccentChar(accent) & vowel[c.sizeof..vowel.len-1]
-    else:        
-      newVowel = $vowel.runeAt(0) & $vowel.runeAt(1).addAccentChar(accent)
+    else:
+      newVowel = $vowel{0} & $vowel{1}.addAccentChar(accent)
       var i = 0
       for c in vowel.runes:
         if i >= 2:

@@ -21,9 +21,9 @@ proc getMarkChar*(c: Rune): Mark =
   if c.int == 0:
     return NO_MARK
   var c = c.removeAccentChar
-  if "đ".runeAt(0) == c:
+  if u"đ" == c:
     return BAR
-  if "ă".runeAt(0) == c:
+  if u"ă" == c:
     return BREVE
   if c in "ơư":
     return HORN
@@ -39,33 +39,33 @@ proc addMarkChar(c: Rune, m: Mark): Rune =
   var newCh = ch
   if m == HAT:
     if ch in FAMILY_A:
-      newCh = "â".runeAt(0)
+      newCh = u"â"
     elif ch in FAMILY_O:
-      newCh = "ô".runeAt(0)
+      newCh = u"ô"
     elif ch in FAMILY_E:
-      newCH = "ê".runeAt(0)
+      newCH = u"ê"
   elif m == HORN:
     if ch in FAMILY_O:
-      newCh = "ơ".runeAt(0)
+      newCh = u"ơ"
     elif ch in FAMILY_U:
-      newCh = "ư".runeAt(0)
+      newCh = u"ư"
   elif m == BREVE:
     if ch in FAMILY_A:
-      newCh = "ă".runeAt(0)
+      newCh = u"ă"
   elif m == BAR:
     if ch in FAMILY_D:
-      newCh = "đ".runeAt(0)
+      newCh = u"đ"
   elif m == NO_MARK:
     if ch in FAMILY_A:
-      newCh = Rune('a')
+      newCh = u"a"
     elif ch in FAMILY_E:
-      newCh = Rune('e')
+      newCh = u"e"
     elif ch in FAMILY_O:
-      newCh = Rune('o')
+      newCh = u"o"
     elif ch in FAMILY_U:
-      newCh = Rune('u')
+      newCh = u"u"
     elif ch in FAMILY_D:
-      newCh = Rune('d')
+      newCh = u"d"
   newCh = newCh.addAccentChar(accent)
   if isUpper:
     result = newCh.toUpper
