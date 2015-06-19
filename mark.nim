@@ -86,7 +86,7 @@ proc addMarkAt*(s: string, index: int, mark: Mark): string =
   
   
 proc addMark*(comps: var Components, mark: Mark) =
-  if mark == BAR and comps.firstConsonant != "" and comps.firstConsonant.lastRune in FAMILY_D:
+  if mark == BAR and comps.firstConsonant != "" and comps.firstConsonant.last in FAMILY_D:
     var f = comps.firstConsonant
     comps.firstConsonant = f.addMarkAt(f.runeLen-1, BAR)
   else:
@@ -149,7 +149,7 @@ proc isValidMark*(comps: Components, marks: string): bool =
   ## Check whether the mark given by mark_trans is valid to add to the components
   if marks == "*_":
     return true
-  if marks[0] == 'd' and comps.firstConsonant != "" and comps.firstConsonant.lastRune in FAMILY_D:
+  if marks[0] == 'd' and comps.firstConsonant != "" and comps.firstConsonant.last in FAMILY_D:
     return true
   elif comps.vowel != "" and comps.vowel.strip.toLower.find(marks[0]) != -1:
     return true

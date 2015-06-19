@@ -49,11 +49,10 @@ proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
   return false
 
    
-proc lastRune*(s: string): Rune {.noSideEffect.} =
-  for r in s.runes:
-    result = r
+proc last*(s: string): Rune {.noSideEffect, inline, procVar.} =
+  s{s.runeLen-1}
 
-proc isVowel*(c: Rune): bool {.noSideEffect, inline.} =
+proc isVowel*(c: Rune): bool {.noSideEffect, inline, procVar.} =
   VOWELS.indexOf(c) != -1
 
 proc toLower*(s: string): string {.noSideEffect, procvar.} =
