@@ -56,7 +56,7 @@ proc removeAccentString*(s: string): string =
     i += c.len
   result.setLen(i) 
 
-proc addAccent(comps: var Components, accent: Accent) =
+proc addAccent*(comps: var Components, accent: Accent) =
   ## Add accent to the given components.
   var vowel = comps.vowel  
   if accent == NONE:

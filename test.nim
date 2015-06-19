@@ -2,18 +2,16 @@ import utils
 import strutils
 import unicode
 import accent
-
-
-var s1 = "abcdef"
-echo s1[1..2]
-quit()
+import types
 
 #echo "à".runeAt(0).removeAccentChar
 #quit()
 #echo separate("tướng")
+var comps = newComponents("Ng", "ƯƠi")
+comps.addAccent(HOOK)
+echo comps.vowel
 
-var s = "TÔI LÀ NGƯỜI VIỆT NAM"
-discard "- Cộng hoà xã hội Chủ nghĩa Việt Nam"
+var s = "TÔI LÀ NGƯỜI VIỆT NAM - Cộng hoà xã hội Chủ nghĩa Việt Nam"
 echo s.len
 echo s.removeAccentString
 echo s.removeAccentString.len

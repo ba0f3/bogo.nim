@@ -12,3 +12,8 @@ type
     vowel*: string
     lastConsonant*: string
 
+proc newComponents*(f: string = "", v: string = "", l: string = ""): Components =
+  new(result)
+  result.firstConsonant = f
+  result.vowel = v
+  result.lastConsonant = l
