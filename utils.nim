@@ -42,6 +42,13 @@ proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
     i.inc
   return -1
 
+proc rfind*(s: string, c: Rune): int {.noSideEffect.} =
+  result = -1
+  var i = 0
+  for r in s.runes:
+    if r == c:
+      result = i 
+  
 proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
   for r in s.runes:
     if r == c:
@@ -139,3 +146,8 @@ proc separate*(s: string): Components =
     result.firstConsonant &= $result.vowel[0]
     result.vowel.delete(0, 0)
     
+ proc hasKey*(im: InputMethod, v: Rune): bool {.noSideEffect, inline.} =
+   for k in im.keys:
+    if c in k:
+      return true
+   return false

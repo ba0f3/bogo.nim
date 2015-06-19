@@ -16,7 +16,7 @@ echo VOWELS{2}
 
 echo VOWELS{1..2}
 echo VOWELS.ulen
-discard getTelexDifinition()
+
 echo separate("tướng")
 
 assert isValidString("éc")
