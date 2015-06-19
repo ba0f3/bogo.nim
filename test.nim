@@ -2,6 +2,7 @@ import utils
 import strutils
 import unicode
 import accent
+import mark
 import types
 
 #echo "à".runeAt(0).removeAccentChar

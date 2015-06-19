@@ -14,13 +14,26 @@ proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
     i += 1
   return -1
 
+proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
+  for r in s.runes:
+    if r == c:
+      return true
+  return false
+
 proc runeAt*(s: string, i: int): Rune {.inline.} =
   var j = 0
   for r in s.runes:
     if j == i:
       return r
     j += 1    
-  
+
+#proc `[]`*(s: string, i: int): Rune =
+#  discard    
+    
+proc lastRune*(s: string): Rune {.noSideEffect.} =
+  for r in s.runes:
+    result = r
+
 proc isVowel*(c: Rune): bool {.noSideEffect, inline.} =
   VOWELS.indexOf(c) != -1
 
@@ -109,6 +122,4 @@ proc separate*(s: string): Components =
      (result.firstConsonant[0] in "qQ" and result.vowel[0] in "uU")):
     result.firstConsonant &= $result.vowel[0]
     result.vowel.delete(0, 0)
-
-
     

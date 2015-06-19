@@ -1,4 +1,4 @@
-import unicode
+import unicode except toLower
 import utils
 import types
 
@@ -28,7 +28,7 @@ proc addAccentChar*(c: Rune, accent: Accent): Rune =
     return c
 
   let isUpper = c.isUpper
-  var ch = c.toLower
+  var ch = unicode.toLower(c)
   var index = VOWELS.indexOf(ch)
   if index >= 0:
     index = index - index mod 6 + 5
@@ -45,7 +45,7 @@ proc removeAccentChar*(c: Rune): Rune =
 proc removeAccentString*(s: string): string =
   ## Remove all accent from a whole string.
   var i = 0
-  result = newString(s.len+100)
+  result = newString(s.len)
   for r in s.runes:
     if r.int == 0:
       continue
@@ -64,7 +64,7 @@ proc addAccent*(comps: var Components, accent: Accent) =
   elif vowel == "":
     discard
   else:
-    var rawString = utils.toLower(vowel.removeAccentString)
+    var rawString = vowel.removeAccentString.toLower
     
     var index = max(rawString.indexOf("ê".runeAt(0)), rawString.indexOf("ơ".runeAt(0)))
     var newVowel = ""
