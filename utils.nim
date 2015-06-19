@@ -5,6 +5,7 @@ const
   VOWELS* = "àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
 
 proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
+  var c = c.toLower  
   var i = 0  
   for r in s.runes:
     if r == c:
@@ -12,16 +13,35 @@ proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
     i += 1
   return -1
 
-proc runeAt*(s: string, i: int): Rune =
+proc runeAt*(s: string, i: int): Rune {.inline.} =
   var j = 0
   for r in s.runes:
     if j == i:
       return r
     j += 1    
   
-proc isVowel*(c: Rune): bool {.noSideEffect.} =
+proc isVowel*(c: Rune): bool {.noSideEffect, inline.} =
   VOWELS.indexOf(c) != -1
-  
+
+proc toLower*(s: string): string {.noSideEffect, procvar.} =
+  result = newString(s.len)
+  var i = 0
+  for r in s.runes:
+    var c = r.toLower.toUTF8
+    for j in 0..c.len-1:
+      result[i+j] = c[j]
+    i += c.len
+
+proc toUpper*(s: string): string {.noSideEffect, procvar.} =
+  result = newString(s.len)
+  var i = 0
+  for r in s.runes:
+    var c = r.toUpper.toUTF8
+    for j in 0..c.len-1:
+      result[i+j] = c[j]
+    i += c.len
+
+
 proc appendComps(comps: var array[0..2, string], c: Rune) =
   ## Append a character to `comps` following this rule: a vowel is added to the
   ## vowel part if there is no last consonant, else to the last consonant part;
