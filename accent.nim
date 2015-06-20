@@ -1,4 +1,4 @@
-import unicode except toLower
+import unicode except toLower, toUpper
 import utils
 import types
 
@@ -44,7 +44,6 @@ proc removeAccentChar*(c: Rune): Rune =
 
 proc removeAccentString*(s: string): string =
   ## Remove all accent from a whole string.
-  var i = 0
   result = ""
   for r in s.runes:
     result.add($r.removeAccentChar)
@@ -70,18 +69,18 @@ proc addAccent*(comps: var Components, accent: Accent) =
           break
       newVowel &= $addAccentChar(vowel{index}, accent)
           
-      if vowel.runeLen-1 > index:
+      if vowel.ulen-1 > index:
         var i = 0
         for c in vowel.runes:
           if i >= index:
             newVowel &= $c
-    elif vowel.runeLen == 1 or (vowel.runeLen == 2 and comps.lastConsonant == ""):
+    elif vowel.ulen == 1 or (vowel.ulen == 2 and not comps.hasLast):
       var c = vowel{0}
-      newVowel = $c.addAccentChar(accent) & vowel[c.sizeof..vowel.len-1]
+      newVowel = $c.addAccentChar(accent) & vowel{c.sizeof..vowel.ulen-1}
     else:
       newVowel = $vowel{0} & $vowel{1}.addAccentChar(accent)
       var i = 0
       for c in vowel.runes:
         if i >= 2:
           newVowel &= $c
-    comps.vowel = newVowel            
+    comps.vowel = newVowel

@@ -1,32 +1,47 @@
 import unicode
 import strutils
+import strtabs
 import types
 
 const  
   VOWELS* = r"àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
 
+proc ulen*(s: string): int {.noSideEffect, inline.} =
+  return s.runeLen
 
 proc `{}`*(s: string, x: int): Rune {.noSideEffect, inline.} =
   ## slice operation for strings.
-  if x > s.runeLen-1:
+
+  var x = x
+  if x > s.ulen-1:
     return Rune(0)
+
+  if x < 0:
+    x = s.ulen + x;
+    
   var i = 0
   for c in s.runes:
     if i == x:
       return c
     i.inc
-  
+
+proc `..-`*(a, b: int): Slice[int] {.noSideEffect, inline.} =
+  result.a = a
+  result.b = -b
+    
 proc `{}`*(s: string, x: Slice[int]): string {.noSideEffect, inline.} =
   ## slice operation for unicode strings. 
   result = ""
+
+  var b = x.b
+  if b < 0:
+    b = s.ulen + b
+  
   var i = 0
   for c in s.runes:
-    if i >= x.a and i <= x.b:
+    if i >= x.a and i < b:
       result.add($c)
     i.inc
-
-proc ulen*(s: string): int {.noSideEffect, inline.} =
-  return s.runeLen
 
 proc u*(s: string): Rune {.compileTime, noSideEffect.} =
   ## Constructor of a literal Rune from single char raw string.
@@ -57,10 +72,16 @@ proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
 
    
 proc last*(s: string): Rune {.noSideEffect, inline, procVar.} =
-  s{s.runeLen-1}
+  s{-1}
 
 proc isVowel*(c: Rune): bool {.noSideEffect, inline, procVar.} =
   VOWELS.indexOf(c) != -1
+
+proc toLower*(c: Rune): Rune {.noSideEffect, procvar.} =
+  return unicode.toLower(c)
+
+proc toUpper*(c: Rune): Rune {.noSideEffect, procvar.} =
+  return unicode.toUpper(c)
 
 proc toLower*(s: string): string {.noSideEffect, procvar.} =
   result = newString(s.len)
@@ -97,14 +118,14 @@ proc appendComps*(comps: var Components, c: Rune) =
   ## ['c', 'o', 'no']
   
   if c.isVowel:
-    if comps.lastConsonant == "":
+    if not comps.hasLast:
       # pos = 1
       comps.vowel = $c
     else:
       # pos = 2
       comps.lastConsonant = $c
   else:
-    if comps.lastConsonant == "" and comps.vowel == "":
+    if not comps.hasLast and not comps.hasVowel:
       # pos = 0
       comps.firstConsonant = $c
     else:
@@ -117,14 +138,14 @@ proc separate*(s: string): Components =
   ##
   ## >>> separate('tuong')
   ## ['t','uo','ng']
-  ## >>> 
+  ## >>> separate('ohmyfkinggod')
   ## ['ohmyfkingg','o','d']
   
   proc atomicSeparate(s, lastChars: string, lastIsVowel: bool): array[0..1, string] =
-    if s.len == 0 or (lastIsVowel != s{s.runeLen-1}.isVowel):
+    if s == "" or (lastIsVowel != s.last.isVowel):
       result = [s, lastChars]
     else:
-      result = atomicSeparate(s{0..s.runeLen-2}, $s{s.runeLen-1} & lastChars, lastIsVowel)
+      result = atomicSeparate(s{0..-1}, $s{-1} & lastChars, lastIsVowel)
 
   new(result)
   var tmp = atomicSeparate(s, "", false)
@@ -133,21 +154,22 @@ proc separate*(s: string): Components =
   result.firstConsonant = tmp[0]
   result.vowel = tmp[1]
 
-  if result.lastConsonant != "" and result.vowel == "" and result.firstConsonant == "":
-    result = newComponents(result.lastConsonant)  # ['', '', b] -> ['b', '', '']
+  if result.hasLast and not result.hasVowel and not result.hasFirst:
+    result.firstConsonant = result.lastConsonant  # ['', '', b] -> ['b', '', '']
+    result.lastConsonant = ""
 
   # 'gi' and 'qu' are considered qualified consonants.
   # We want something like this:
   #     ['g', 'ia', ''] -> ['gi', 'a', '']
   #     ['q', 'ua', ''] -> ['qu', 'a', '']
-  if (result.firstConsonant != "" and result.vowel != "") and
-     ((result.firstConsonant[0] in "gG" and result.vowel[0] in "iI" and result.vowel.runeLen > 1) or
+  if (result.hasFirst and result.hasVowel) and
+     ((result.firstConsonant[0] in "gG" and result.vowel[0] in "iI" and result.vowel.ulen > 1) or
      (result.firstConsonant[0] in "qQ" and result.vowel[0] in "uU")):
-    result.firstConsonant &= $result.vowel[0]
-    result.vowel.delete(0, 0)
+    result.firstConsonant &= $result.vowel{0}
+    result.vowel = result.vowel{1..-1}
     
- proc hasKey*(im: InputMethod, v: Rune): bool {.noSideEffect, inline.} =
-   for k in im.keys:
-    if c in k:
+proc hasKey*(im: InputMethod, v: Rune): bool {.noSideEffect, inline.} =
+  for k in im.keys():
+    if v in k:
       return true
-   return false
+  return false

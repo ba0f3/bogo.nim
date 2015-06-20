@@ -8,14 +8,9 @@ import validation
 import types
 import utils
 
+echo processSequence("con méof.ddieen", getTelexDifinition())
+echo processSequence("Vieejt Nam quee huwowng tooi", getTelexDifinition())
 
-
-let myrune: Rune = u"ê"
-echo myrune
-echo VOWELS{2}
-
-echo VOWELS{1..2}
-echo VOWELS.ulen
 
 echo separate("tướng")
 
@@ -24,12 +19,6 @@ assert isValidString("ác")
 assert isValidString("úc")
 assert isValidString("óc")
 
-echo u"à".removeAccentChar
-#quit()
-
-var comps = newComponents("Ng", "ƯƠi")
-comps.addAccent(HOOK)
-echo comps.vowel
 
 var s = "TÔI LÀ NGƯỜI VIỆT NAM - Cộng hoà xã hội Chủ nghĩa Việt Nam"
 echo s.ulen

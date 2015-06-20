@@ -30,14 +30,14 @@ const
                                "ay", "eu", "oi", "oi", "ui", "uu", "uoi", "uou"]
 
 proc hasValidConsonants(c: Components): bool =
-  return not ((c.firstConsonant != "" and not CONSONANTS.contains(c.firstConsonant)) or
-    (c.lastConsonant != "" and not TERMINAL_CONSONANTS.contains(c.lastConsonant)))
+  return not ((c.hasFirst and not CONSONANTS.contains(c.firstConsonant)) or
+    (c.hasLast and not TERMINAL_CONSONANTS.contains(c.lastConsonant)))
 
 proc hasValidVowelNonFinal(c: Components): bool =
   ## If the sound_tuple is not complete, we only care whether its vowel
   ## position can be transformed into a legit vowel.
   var stripped = c.vowel.strip
-  if c.lastConsonant != "":
+  if c.hasLast:
     return stripped in filter(STRIPPED_VOWELS) do (x: string) -> bool: not STRIPPED_TERMINAL_VOWELS.contains(x)
   else:
     return stripped in STRIPPED_VOWELS
@@ -47,26 +47,25 @@ proc hasValidVowel(c: Components): bool =
 
   proc hasValidVowelForm(): bool =
     return vowelNoAccent in VOWELS and
-      not (c.lastConsonant != "" and vowelNoAccent in TERMINAL_VOWELS)
+      not (c.hasLast and vowelNoAccent in TERMINAL_VOWELS)
 
   proc hasValidChEnding(): bool =
     # 'ch' can only go after a, ê, uê, i, uy, oa
     return not (c.lastConsonant == "ch" and not (vowelNoAccent in @["a", "ê", "uê", "i", "uy", "oa"]))
 
-  proc hasValidCEnding(): bool =
-    # 'c' can't go after 'i' or 'ơ'
-    return not (c.lastConsonant == "c" and (vowelNoAccent in @["i", "ơ"]))
+  #proc hasValidCEnding(): bool =
+  #  # 'c' can't go after 'i' or 'ơ'
+  #  return not (c.lastConsonant == "c" and (vowelNoAccent in @["i", "ơ"]))
 
-  proc hasValidNgEnding(): bool =
-    # 'ng' can't go after 'i' or 'ơ'
-    return not (c.lastConsonant == "ng" and (vowelNoAccent in @["i", "ơ"]))
+  #proc hasValidNgEnding(): bool =
+  #  # 'ng' can't go after 'i' or 'ơ'
+  #  return not (c.lastConsonant == "ng" and (vowelNoAccent in @["i", "ơ"]))
 
-  proc hasValidNhEnding(): bool =
-    # 'nh' can only go after a, ê, uy, i, oa, quy
-    var hasYButIsNotQuynh = vowelNoAccent == "y" and c.firstConsonant != "qu"
-    var hasInvalidVowel = not (vowelNoAccent in @["a", "ê", "i", "uy", "oa", "uê", "y"])
-
-    return not (c.lastConsonant == "nh" and (hasInvalidVowel or hasYButIsNotQuynh))
+  #proc hasValidNhEnding(): bool =
+  #  # 'nh' can only go after a, ê, uy, i, oa, quy
+  #  var hasYButIsNotQuynh = vowelNoAccent == "y" and c.firstConsonant != "qu"
+  #  var hasInvalidVowel = not (vowelNoAccent in @["a", "ê", "i", "uy", "oa", "uê", "y"])
+  #  return not (c.lastConsonant == "nh" and (hasInvalidVowel or hasYButIsNotQuynh))
 
   # The ng and nh rules are not really phonetic but spelling rules.
   # Including them may hinder typing freedom and may prevent typing
@@ -99,14 +98,14 @@ proc isValidSoundTuple(c: Components, finalForm = true): bool =
   c.lastConsonant = c.lastConsonant.toLower
 
   #XXX Words with no vowel are always valid ??
-  if c.vowel == "":
+  if not c.hasVowel:
     return true
   elif finalForm:
     return c.hasValidConsonants and c.hasValidVowel and c.hasValidAccent
   else:
     return c.hasValidConsonants and c.hasValidVowelNonFinal
 
-proc isValidCombination(c: Components, finalForm = true): bool =
+proc isValidCombination*(c: Components, finalForm = true): bool =
   return c.isValidSoundTuple(finalForm)
     
 proc isValidString*(s: string, finalForm = true): bool =

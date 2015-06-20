@@ -4,7 +4,7 @@
 ## to change the base sound of a character but not its tonal quality.
 ## E.g. the hat mark in â.
 
-import unicode except toLower
+import unicode except toLower, toUpper
 import accent
 import utils
 import types
@@ -31,7 +31,7 @@ proc getMarkChar*(c: Rune): Mark =
     return HAT
   return NO_MARK
 
-proc addMarkChar(c: Rune, m: Mark): Rune =
+proc addMarkChar*(c: Rune, m: Mark): Rune =
   ## Add mark to a single char.  
   var isUpper = c.isUpper
   var accent = c.getAccentChar
@@ -73,7 +73,7 @@ proc addMarkChar(c: Rune, m: Mark): Rune =
     result = newCh
   
 proc addMarkAt*(s: string, index: int, mark: Mark): string =
-  ## Add mark to the index-th character of the given string. Return the new string after applying change.  
+  ## Add mark to the index-th character of the given string. Return the new string after applying change.
   if index == -1:
     return s
   result = ""
@@ -86,13 +86,15 @@ proc addMarkAt*(s: string, index: int, mark: Mark): string =
   
   
 proc addMark*(comps: var Components, mark: Mark) =
-  if mark == BAR and comps.firstConsonant != "" and comps.firstConsonant.last in FAMILY_D:
+  echo comps.debug, " ", mark
+  var rawVowel: string      
+  if mark == BAR and comps.hasFirst and comps.firstConsonant.last in FAMILY_D:
     var f = comps.firstConsonant
-    comps.firstConsonant = f.addMarkAt(f.runeLen-1, BAR)
+    comps.firstConsonant = f.addMarkAt(f.ulen-1, BAR)
   else:
     # remove all marks and accents in vowel part
     comps.addAccent(NONE)
-    var rawVowel = comps.vowel.removeAccentString.toLower
+    rawVowel = comps.vowel.removeAccentString.toLower
     var pos: int
     if mark == HAT:
       pos = max(rawVowel.find('a'), rawVowel.find('o'), rawVowel.find('e'))
@@ -118,17 +120,17 @@ proc addMark*(comps: var Components, mark: Mark) =
         comps.vowel = comps.vowel.addMarkAt(pos, mark)
             
   if mark == NO_MARK:     
-    #if rawVowel == comps.vowel.toLower:
-    discard
-      #if comp[0] and comp[0][-1] == "đ":
-      #  comp[0] = comp[0][:-1] + "d"
+    if rawVowel != comps.vowel.toLower:
+      comps.vowel = rawVowel
+    elif comps.hasFirst and comps.firstConsonant.last == u"đ":
+      comps.firstConsonant = comps.firstConsonant{0..-1} & "d"
     
 
-proc removeMarkChar(c: Rune): Rune =
+proc removeMarkChar*(c: Rune): Rune =
   ## Remove mark from a single character, if any.
   return c.addMarkChar(NO_MARK)
 
-proc removeMarkString(s: string): string =
+proc removeMarkString*(s: string): string =
   var i = 0
   result = newString(s.len)
   for r in s.runes:
@@ -149,9 +151,9 @@ proc isValidMark*(comps: Components, marks: string): bool =
   ## Check whether the mark given by mark_trans is valid to add to the components
   if marks == "*_":
     return true
-  if marks[0] == 'd' and comps.firstConsonant != "" and comps.firstConsonant.last in FAMILY_D:
+  if marks[0] == 'd' and comps.hasFirst and comps.firstConsonant.last in FAMILY_D:
     return true
-  elif comps.vowel != "" and comps.vowel.strip.toLower.find(marks[0]) != -1:
+  elif comps.hasVowel and comps.vowel.strip.toLower.find(marks[0]) != -1:
     return true
   else:
     return false
