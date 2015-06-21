@@ -8,11 +8,12 @@ import validation
 import types
 import utils
 
-echo processSequence("con méof.ddieen", getTelexDifinition())
-echo processSequence("Vieejt Nam quee huwowng tooi", getTelexDifinition())
+
+#echo processSequence("ddieen", getTelexDifinition())
+echo processSequence("hw", getTelexDifinition())
+quit()
 
 
-echo separate("tướng")
 
 assert isValidString("éc")
 assert isValidString("ác")

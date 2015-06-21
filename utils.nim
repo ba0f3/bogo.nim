@@ -50,7 +50,7 @@ proc u*(s: string): Rune {.compileTime, noSideEffect.} =
 
 proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
   var c = c.toLower  
-  var i = 0  
+  var i = 0
   for r in s.runes:
     if r == c:
       return i
@@ -116,22 +116,21 @@ proc appendComps*(comps: var Components, c: Rune) =
   ## ['c', 'o', 'n']
   ## >>> transform(['c', 'o', 'n'], '+o')
   ## ['c', 'o', 'no']
-  
   if c.isVowel:
     if not comps.hasLast:
       # pos = 1
-      comps.vowel = $c
+      comps.vowel.add($c)
     else:
       # pos = 2
-      comps.lastConsonant = $c
+      comps.lastConsonant.add($c)
   else:
     if not comps.hasLast and not comps.hasVowel:
       # pos = 0
-      comps.firstConsonant = $c
+      comps.firstConsonant.add($c)
     else:
       # pos = 2
-      comps.lastConsonant = $c
-
+      comps.lastConsonant.add($c)
+      
 proc separate*(s: string): Components =
   ## Separate a string into smaller parts: first consonant (or head), vowel,
   ## last consonant (if any).
@@ -141,23 +140,22 @@ proc separate*(s: string): Components =
   ## >>> separate('ohmyfkinggod')
   ## ['ohmyfkingg','o','d']
   
-  proc atomicSeparate(s, lastChars: string, lastIsVowel: bool): array[0..1, string] =
+  proc atomicSeparate(s, lastChars: string, lastIsVowel: bool): StringPair =
     if s == "" or (lastIsVowel != s.last.isVowel):
-      result = [s, lastChars]
+      return [s, lastChars]
     else:
-      result = atomicSeparate(s{0..-1}, $s{-1} & lastChars, lastIsVowel)
+      return atomicSeparate(s{0..-1}, s.last.toUTF8 & lastChars, lastIsVowel)
 
   new(result)
-  var tmp = atomicSeparate(s, "", false)
-  result.lastConsonant = tmp[1]
-  tmp = atomicSeparate(tmp[0], "", true)
-  result.firstConsonant = tmp[0]
-  result.vowel = tmp[1]
-
+  var pair = atomicSeparate(s, "", false)
+  result.lastConsonant = pair.second()
+  pair = atomicSeparate(pair.first(), "", true)
+  result.firstConsonant = pair.first()
+  result.vowel = pair.second()
+  
   if result.hasLast and not result.hasVowel and not result.hasFirst:
     result.firstConsonant = result.lastConsonant  # ['', '', b] -> ['b', '', '']
     result.lastConsonant = ""
-
   # 'gi' and 'qu' are considered qualified consonants.
   # We want something like this:
   #     ['g', 'ia', ''] -> ['gi', 'a', '']
@@ -165,8 +163,8 @@ proc separate*(s: string): Components =
   if (result.hasFirst and result.hasVowel) and
      ((result.firstConsonant[0] in "gG" and result.vowel[0] in "iI" and result.vowel.ulen > 1) or
      (result.firstConsonant[0] in "qQ" and result.vowel[0] in "uU")):
-    result.firstConsonant &= $result.vowel{0}
-    result.vowel = result.vowel{1..-1}
+    result.firstConsonant.add($result.vowel{0})
+    result.vowel = result.vowel{1..result.vowel.ulen}
     
 proc hasKey*(im: InputMethod, v: Rune): bool {.noSideEffect, inline.} =
   for k in im.keys():

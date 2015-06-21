@@ -1,3 +1,4 @@
+from unicode import Rune
 import strtabs
 
 type
@@ -30,9 +31,9 @@ type
     of ADD_ACCENT:
       accent*: Accent
     else:
-      keys*: string
+      key*: Rune
 
-  ProcessKeyResult* = array[0..1, string]
+  StringPair* = array[0..1, string]
 
   Components* = ref object of RootObj
     firstConsonant*: string
@@ -47,6 +48,12 @@ proc newComponents*(f: string = "", v: string = "", la: string = ""): Components
   result.vowel = v
   result.lastConsonant = la
 
+proc `==`*(x,y: Components): bool {.noSideEffect, inline.} =
+  return x.firstConsonant == y.firstConsonant and x.vowel == y.vowel and x.lastConsonant == y.lastConsonant
+  
+proc copy*(c: Components): Components {.noSideEffect, inline.} =
+  newComponents(c.firstConsonant, c.vowel, c.lastConsonant)
+  
 proc hasFirst*(c: Components): bool =
   return not c.firstConsonant.isNil and c.firstConsonant != ""  
 
@@ -62,16 +69,22 @@ proc debug*(c: Components): string =
 proc `$`*(c: Components): string =
   result = ""
   if c.hasFirst:
-    result &= c.firstConsonant
+    result.add(c.firstConsonant)
   if c.hasVowel:
-    result &= c.vowel
+    result.add(c.vowel)
   if c.hasLast:
-    result &= c.lastConsonant
+    result.add(c.lastConsonant)
 
-proc `$`*(p: ProcessKeyResult): string =
-  return "[\"" & p[0] &"\", \"" & p[1] & "\"]"    
+proc first*(p: StringPair): string {.noSideEffect, inline, procVar.} =
+  p[0]
+
+proc second*(p: StringPair): string {.noSideEffect, inline, procVar.} =
+  p[1]
+  
+proc `$`*(p: StringPair): string =
+  return "[\"" & p[0] & "\", \"" & p[1] & "\"]"    
  
-proc newAction*(k: ActionKind, mark: Mark = NO_MARK, accent = NONE, keys = ""): Action =
+proc newAction*(k: ActionKind, mark: Mark = NO_MARK, accent = NONE, key = Rune(0)): Action =
   new(result)
   result.kind = k
   case k
@@ -80,4 +93,4 @@ proc newAction*(k: ActionKind, mark: Mark = NO_MARK, accent = NONE, keys = ""): 
   of ADD_MARK:
     result.mark = mark
   else:
-    result.keys = keys
+    result.key = key

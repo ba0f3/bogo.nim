@@ -50,9 +50,9 @@ proc removeAccentString*(s: string): string =
 
 proc addAccent*(comps: var Components, accent: Accent) =
   ## Add accent to the given components.
-  var vowel = comps.vowel  
+  var vowel = comps.vowel
   if accent == NONE:
-    vowel = vowel.removeAccentString
+    comps.vowel = vowel.removeAccentString
   elif vowel == "":
     discard
   else:
@@ -60,27 +60,14 @@ proc addAccent*(comps: var Components, accent: Accent) =
     
     var index = max(rawString.indexOf(u"ê"), rawString.indexOf(u"ơ"))
     var newVowel = ""
-    if index >= 0:
-      var i = 0
-      for c in vowel.runes:
-        newVowel &= $c
-        i.inc
-        if i >= index:
-          break
-      newVowel &= $addAccentChar(vowel{index}, accent)
-          
-      if vowel.ulen-1 > index:
-        var i = 0
-        for c in vowel.runes:
-          if i >= index:
-            newVowel &= $c
+    if index != -1:
+      newVowel = $vowel{0..index} & $vowel{index}.addAccentChar(accent) & vowel{index+1..vowel.ulen}
     elif vowel.ulen == 1 or (vowel.ulen == 2 and not comps.hasLast):
-      var c = vowel{0}
-      newVowel = $c.addAccentChar(accent) & vowel{c.sizeof..vowel.ulen-1}
+      echo "*** ", vowel, " ", $vowel{0}.addAccentChar(accent), " ", vowel{1..vowel.ulen}
+      newVowel = $vowel{0}.addAccentChar(accent) & vowel{1..vowel.ulen}
+      echo "*** ", newVowel
     else:
-      newVowel = $vowel{0} & $vowel{1}.addAccentChar(accent)
-      var i = 0
-      for c in vowel.runes:
-        if i >= 2:
-          newVowel &= $c
+      newVowel = $vowel{0} & $vowel{1}.addAccentChar(accent) & vowel{2..vowel.ulen}
     comps.vowel = newVowel
+
+  echo "&&& ", comps.debug

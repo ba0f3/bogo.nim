@@ -37,13 +37,14 @@ proc addMarkChar*(c: Rune, m: Mark): Rune =
   var accent = c.getAccentChar
   var ch = unicode.toLower(c).addAccentChar(NONE)
   var newCh = ch
+  echo "^^@ ", ch, " ", newCh, " ", m
   if m == HAT:
     if ch in FAMILY_A:
       newCh = u"â"
     elif ch in FAMILY_O:
       newCh = u"ô"
     elif ch in FAMILY_E:
-      newCH = u"ê"
+      newCh = u"ê"
   elif m == HORN:
     if ch in FAMILY_O:
       newCh = u"ơ"
@@ -74,19 +75,16 @@ proc addMarkChar*(c: Rune, m: Mark): Rune =
   
 proc addMarkAt*(s: string, index: int, mark: Mark): string =
   ## Add mark to the index-th character of the given string. Return the new string after applying change.
+  echo "addMarkAt ", s, " ", index, " ", mark
   if index == -1:
     return s
-  result = ""
-  var i = 0  
-  for c in s.runes:
-    if i == index:
-      result &= $c.addMarkChar(mark)
-    else:
-      result &= $c
+
+  echo s{0..index}
+  echo s{index}.toUTF8
+  echo s{index+1..s.ulen}
+  result = s{0..index} & $s{index}.addMarkChar(mark) & s{index+1..s.ulen}
   
-  
-proc addMark*(comps: var Components, mark: Mark) =
-  echo comps.debug, " ", mark
+proc addMark*(comps: var Components, mark: Mark) =        
   var rawVowel: string      
   if mark == BAR and comps.hasFirst and comps.firstConsonant.last in FAMILY_D:
     var f = comps.firstConsonant
@@ -98,20 +96,18 @@ proc addMark*(comps: var Components, mark: Mark) =
     var pos: int
     if mark == HAT:
       pos = max(rawVowel.find('a'), rawVowel.find('o'), rawVowel.find('e'))
+      echo "^^^ ", pos 
       comps.vowel = comps.vowel.addMarkAt(pos, mark)
+      echo "^^^ ", comps.vowel
     elif mark == BREVE:
       if rawVowel != "ua":
         comps.vowel = comps.vowel.addMarkAt(rawVowel.find('a'), mark)
     elif mark == HORN:
       if rawVowel == "ou" or rawVowel == "uoi" or rawVowel == "uou":
-        var i = 0
         var tmp = ""
-        for c in comps.vowel.runes:
-          # slice [:2]
-          if i == 0 or i == 1:
-            tmp &= $c.addMarkChar(mark)
-          else:
-            tmp &= $c
+        for c in comps.vowel{0..2}.runes:
+          tmp &= $c.addMarkChar(mark)
+        tmp &= comps.vowel{2..comps.vowel.ulen}
         comps.vowel = tmp
       elif rawVowel == "oa":
         comps.vowel = comps.vowel.addMarkAt(1, mark)

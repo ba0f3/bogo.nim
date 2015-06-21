@@ -93,17 +93,14 @@ proc isValidSoundTuple(c: Components, finalForm = true): bool =
   ##    final_form  - whether the tuple represents a complete word
   ## Output:
   ##    True if the tuple seems to be Vietnamese, False otherwise.
-  c.firstConsonant = c.firstConsonant.toLower
-  c.vowel = c.vowel.toLower
-  c.lastConsonant = c.lastConsonant.toLower
-
+  let cLower = newComponents(c.firstConsonant.toLower, c.vowel.toLower, c.lastConsonant.toLower)
   #XXX Words with no vowel are always valid ??
-  if not c.hasVowel:
+  if not cLower.hasVowel:
     return true
   elif finalForm:
-    return c.hasValidConsonants and c.hasValidVowel and c.hasValidAccent
+    return cLower.hasValidConsonants and cLower.hasValidVowel and cLower.hasValidAccent
   else:
-    return c.hasValidConsonants and c.hasValidVowelNonFinal
+    return cLower.hasValidConsonants and cLower.hasValidVowelNonFinal
 
 proc isValidCombination*(c: Components, finalForm = true): bool =
   return c.isValidSoundTuple(finalForm)

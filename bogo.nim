@@ -99,9 +99,9 @@ proc getAction(trans: string): Action =
   ## An ADD_MARK goes with a Mark
   ## while an ADD_ACCENT goes with an Accent
   if trans[0] == '<' or trans[0] == '+':
-    return newAction(ADD_CHAR, keys=($trans{1}))
+    return newAction(ADD_CHAR, key=trans{1})
   if trans[0] == '_':
-    return newAction(UNDO, keys=trans{1..-1})
+    return newAction(UNDO, key=trans{-1})
   if trans.len == 2:
     let m = trans[1]
     var mark: Mark
@@ -142,7 +142,7 @@ proc reverse(c: var Components, trans: string) =
   ## If the transformation does not affect the components, return the original
   ## string.
   let action = trans.getAction
-  if action.kind == ADD_CHAR and last($c).toUTF8.toLower == action.keys.toLower:
+  if action.kind == ADD_CHAR and last($c).toLower == action.key.toLower:
     if c.hasLast:
       c.lastConsonant = c.lastConsonant{0..-1}
     elif c.hasVowel:
@@ -163,17 +163,24 @@ proc reverse(c: var Components, trans: string) =
 
 proc transform(c: var Components, trans: string) =
   ## Transform the given string with transform type trans
+  echo "--> ", c.debug
   var action = trans.getAction
+
   if action.kind == ADD_MARK and not c.hasLast and c.vowel.strip in @["oe", "oa"] and trans == "o^":
-    action = newAction(ADD_CHAR, keys=trans{0}.toUTF8)
+    action = newAction(ADD_CHAR, key=trans{0})
 
   var vowel = ""
   var ac: Accent
+
+  echo "@@@ ", action.kind, " ", trans
   
   if action.kind == ADD_ACCENT:
+    echo "### ", c.debug, action.accent
     c.addAccent(action.accent)
+    echo "### ", c.debug, action.accent
   elif action.kind == ADD_MARK and c.isValidMark(trans):
     c.addMark(action.mark)
+
     # Handle uơ in "huơ", "thuở", "quở"
     # If the current word has no last consonant and the first consonant
     # is one of "h", "th" and the vowel is "ươ" then change the vowel into
@@ -192,6 +199,8 @@ proc transform(c: var Components, trans: string) =
       c.vowel = vowel & $c.vowel{1}
       c.addAccent(ac)
   elif action.kind == ADD_CHAR:
+    echo "@@@ ", c.debug, " ", trans, " ", action.kind, " ", action.key
+  
     if trans[0] == '<':
       if not c.hasLast:
         # Only allow ư, ơ or ươ sitting alone in the middle part
@@ -201,11 +210,11 @@ proc transform(c: var Components, trans: string) =
         if c.firstConsonant.toLower == "g" and c.vowel.toLower == "i":
           c.firstConsonant &= c.vowel
           c.vowel = ""
-        if c.hasVowel or (c.vowel.toLower == "ư" and trans{1}.toLower == u"ơ"):
+        if not c.hasVowel or (c.vowel.toLower == "ư" and trans{1}.toLower == u"ơ"):
           c.vowel &= $trans{1}
     else:
-      c.appendComps(action.keys{0})
-      if action.keys{0}.isAlpha and c.vowel.removeAccentString.toLower.startsWith("uơ"):
+      c.appendComps(action.key)
+      if action.key.isAlpha and c.vowel.removeAccentString.toLower.startsWith("uơ"):
         ac = c.vowel.getAccentString
         if c.vowel{0}.isUpper:
           vowel = "Ư"
@@ -222,11 +231,13 @@ proc transform(c: var Components, trans: string) =
   elif action.kind == UNDO:
     c.reverse(trans{1..-1})
 
-  if action.kind == ADD_MARK or (action.kind == ADD_CHAR and action.keys{0}.isAlpha):
+  if action.kind == ADD_MARK or (action.kind == ADD_CHAR and action.key.isAlpha):
+    echo "### ", c.debug, action.kind  
     ac = c.vowel.getAccentString
     if ac != NONE:
       c.addAccent(NONE)
       c.addAccent(ac)
+  echo "<-- ", c.debug
 
 proc canUndo(c: Components, transList: seq[string]): bool =
   ## Return whether a components can be undone with one of the transformation in
@@ -253,7 +264,7 @@ proc canUndo(c: Components, transList: seq[string]): bool =
       if action.mark in markList:
         return true
     of ADD_CHAR:
-      if action.keys{0} == removeAccentChar(c.vowel.last): # ơ, ư
+      if action.key == removeAccentChar(c.vowel.last): # ơ, ư
         return true
     else:
       discard
@@ -264,23 +275,27 @@ proc canUndo(c: Components, transList: seq[string]): bool =
       return true
   return false
   
-proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skipNonVNese = true): ProcessKeyResult =
+proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skipNonVNese = true): StringPair =
+  echo "~~~ ", str, " ", key, " ", fallbackSeq  
   var fallbackSeq = fallbackSeq
   ## Process a keystroke.
   #proc defaultReturn(): ProcessKeyResult =
   #  return [str & $key, fallbackSeq & $key]
 
   var comps = str.separate()
-
+  echo "~~~ ", str, " ", comps.debug
   # Find all possible transformations this keypress can generate  
   var transList = getTransformationList(key, im, fallbackSeq)
-  var newComps = comps
-
+  echo "~~~ ", transList
+  var newComps = comps.copy
   # Then apply them one by one
   for t in transList:
     newComps.transform(t)
 
+  echo "~~~~ ", newComps.debug, " ", comps.debug
+    
   if newComps == comps:
+    var tmpComps = newComps.copy  
     # If none of the transformations (if any) work
     # then this keystroke is probably an undo key.  
     if newComps.canUndo(transList):
@@ -320,40 +335,40 @@ proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skip
       if isTelexLike() and notFirstKeyPress() and undoneVowelEndsWithU() and userTypedWW() and userDidntTypeUWW():
         newComps.vowel = newComps.vowel{0..-1}
 
-    if comps == newComps:
-      fallbackSeq &= $key
+    if tmpComps == newComps:
+      fallbackSeq.add($key)
+    echo ">===> ", newComps.debug, " ", key
     newComps.appendComps(key)
+    echo "<===< ", newComps.debug, " ", key    
   else:
-    fallbackSeq &= $key
-
+    fallbackSeq.add($key)
+    
   if skipNonVNese and key.isAlpha and not newComps.isValidCombination(finalForm=false):
-    return [fallbackSeq, fallbackSeq]
+    result = [fallbackSeq, fallbackSeq]
   else:
-    return [$newComps, fallbackSeq]
-          
+    result = [$newComps, fallbackSeq]
       
 proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): string =
   ## Convert a key sequence into a Vietnamese string with diacritical marks.
+  result = ""
   var text = ""
   var raw = ""
-  var resultParts: seq[string] = @[]
   for key in sequence.runes:
     if not key.isAcceptedChar(im):
-      resultParts.add(text)
-      resultParts.add($key)
+      echo "=== ", key
+      result.add(text)
+      result.add($key)
       text = ""
       raw = ""
     else:
+      echo "==> ", text, " ", key, " ", raw
       var tmp = processKey(text, key, im, raw, skipNonVNese)
-      text = tmp[0]
-      raw = tmp[1]
-
-  resultParts.add(text)
-  
-  result = ""    
-  for s in resultParts:
-    result &= s
-  
+      echo "<== ", tmp.first(), " ", tmp.second()
+      text = tmp.first()
+      raw = tmp.second()
+      
+  result.add(text)
+    
 proc handleBackspace(convertedStr, rawSeq = string, im: InputMethod): string =
   ## Returns a new raw_sequence after a backspace. This raw_sequence should
   ## be pushed back to processSequence().  
