@@ -7,7 +7,7 @@ import mark
 import types
 import validation
 
-proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMethod {.procVar.} =
+proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMethod {.procVar, exportc: "getTelexdDfinition".} =
   ## Create a definition dictionary for the TELEX input method
   ##
   ## Args:
@@ -39,7 +39,7 @@ proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMeth
     result["}"] = "<Ư"
     result["{"] = "<Ơ"
 
-proc getVniDefinition*(): InputMethod {.procVar.} =
+proc getVniDefinition*(): InputMethod {.procVar, exportc: "getVniDefinition".} =
   result = newStringTable(modeCaseInsensitive)
   result["6"] = "a^ o^ e^"
   result["7"] = "u* o*"
@@ -199,8 +199,6 @@ proc transform(c: var Components, trans: string) =
       c.vowel = vowel & $c.vowel{1}
       c.addAccent(ac)
   elif action.kind == ADD_CHAR:
-    echo "@@@ ", c.debug, " ", trans, " ", action.kind, " ", action.key
-  
     if trans[0] == '<':
       if not c.hasLast:
         # Only allow ư, ơ or ươ sitting alone in the middle part
@@ -275,7 +273,7 @@ proc canUndo(c: Components, transList: seq[string]): bool =
       return true
   return false
   
-proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skipNonVNese = true): StringPair =
+proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skipNonVNese = true): StringPair {.exportc: "processKey".} =
   echo "~~~ ", str, " ", key, " ", fallbackSeq  
   var fallbackSeq = fallbackSeq
   ## Process a keystroke.
@@ -348,7 +346,7 @@ proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skip
   else:
     result = [$newComps, fallbackSeq]
       
-proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): string =
+proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): string {.exportc: "processSequence".} =
   ## Convert a key sequence into a Vietnamese string with diacritical marks.
   result = ""
   var text = ""
