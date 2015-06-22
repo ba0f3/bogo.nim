@@ -39,7 +39,7 @@ proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMeth
     result["}"] = "<Ư"
     result["{"] = "<Ơ"
 
-proc getVniDefinition*(): InputMethod {.procVar, exportc: "getVniDefinition".} =
+proc getVniDifinition*(): InputMethod {.procVar, exportc: "getVniDefinition".} =
   result = newStringTable(modeCaseInsensitive)
   result["6"] = "a^ o^ e^"
   result["7"] = "u* o*"
@@ -70,10 +70,11 @@ proc getTransformationList(key: Rune, im: InputMethod, fallbackSeq: string): seq
   ##
   ## if entered key is not in im, return "+key", meaning appending
   ## the entered key to current text
+  debug "getTransformationlist", key, fallbackSeq
   result = @[]
   var k = unicode.toLower(key)
   if im.hasKey(k):
-    if '\x32' in im[$k]:
+    if ' ' in im[$k]:
       result = im[$k].split
     else:
       result.add(im[$k])
@@ -92,6 +93,7 @@ proc getTransformationList(key: Rune, im: InputMethod, fallbackSeq: string): seq
           result.add("_" & t)
   else:
     result.add("+" & $key)
+  debug "getTransformationlist", result
 
 proc getAction(trans: string): Action =
   ## Return the action inferred from the transformation `trans`.
@@ -163,7 +165,7 @@ proc reverse(c: var Components, trans: string) =
 
 proc transform(c: var Components, trans: string) =
   ## Transform the given string with transform type trans
-  echo "--> ", c.debug
+  debug "transform", c.debug, trans
   var action = trans.getAction
 
   if action.kind == ADD_MARK and not c.hasLast and c.vowel.strip in @["oe", "oa"] and trans == "o^":
@@ -172,12 +174,8 @@ proc transform(c: var Components, trans: string) =
   var vowel = ""
   var ac: Accent
 
-  echo "@@@ ", action.kind, " ", trans
-  
   if action.kind == ADD_ACCENT:
-    echo "### ", c.debug, action.accent
     c.addAccent(action.accent)
-    echo "### ", c.debug, action.accent
   elif action.kind == ADD_MARK and c.isValidMark(trans):
     c.addMark(action.mark)
 
@@ -230,12 +228,11 @@ proc transform(c: var Components, trans: string) =
     c.reverse(trans{1..-1})
 
   if action.kind == ADD_MARK or (action.kind == ADD_CHAR and action.key.isAlpha):
-    echo "### ", c.debug, action.kind  
     ac = c.vowel.getAccentString
     if ac != NONE:
       c.addAccent(NONE)
       c.addAccent(ac)
-  echo "<-- ", c.debug
+  debug "tranform", c.debug
 
 proc canUndo(c: Components, transList: seq[string]): bool =
   ## Return whether a components can be undone with one of the transformation in
@@ -273,24 +270,20 @@ proc canUndo(c: Components, transList: seq[string]): bool =
       return true
   return false
   
-proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skipNonVNese = true): StringPair {.exportc: "processKey".} =
-  echo "~~~ ", str, " ", key, " ", fallbackSeq  
+proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skipNonVNese = true): StringPair =
+  debug "processKey", str, key, fallbackSeq  
   var fallbackSeq = fallbackSeq
   ## Process a keystroke.
   #proc defaultReturn(): ProcessKeyResult =
   #  return [str & $key, fallbackSeq & $key]
 
   var comps = str.separate()
-  echo "~~~ ", str, " ", comps.debug
   # Find all possible transformations this keypress can generate  
   var transList = getTransformationList(key, im, fallbackSeq)
-  echo "~~~ ", transList
   var newComps = comps.copy
   # Then apply them one by one
   for t in transList:
     newComps.transform(t)
-
-  echo "~~~~ ", newComps.debug, " ", comps.debug
     
   if newComps == comps:
     var tmpComps = newComps.copy  
@@ -335,9 +328,7 @@ proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skip
 
     if tmpComps == newComps:
       fallbackSeq.add($key)
-    echo ">===> ", newComps.debug, " ", key
     newComps.appendComps(key)
-    echo "<===< ", newComps.debug, " ", key    
   else:
     fallbackSeq.add($key)
     
@@ -345,27 +336,27 @@ proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skip
     result = [fallbackSeq, fallbackSeq]
   else:
     result = [$newComps, fallbackSeq]
+  debug "processkey", result
       
 proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): string {.exportc: "processSequence".} =
   ## Convert a key sequence into a Vietnamese string with diacritical marks.
+  debug "processSequence", sequence
   result = ""
   var text = ""
   var raw = ""
   for key in sequence.runes:
     if not key.isAcceptedChar(im):
-      echo "=== ", key
+      debug "===", key
       result.add(text)
       result.add($key)
       text = ""
       raw = ""
     else:
-      echo "==> ", text, " ", key, " ", raw
       var tmp = processKey(text, key, im, raw, skipNonVNese)
-      echo "<== ", tmp.first(), " ", tmp.second()
       text = tmp.first()
-      raw = tmp.second()
-      
+      raw = tmp.second()      
   result.add(text)
+  debug "processSequence", result
     
 proc handleBackspace(convertedStr, rawSeq = string, im: InputMethod): string =
   ## Returns a new raw_sequence after a backspace. This raw_sequence should

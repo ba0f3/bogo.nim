@@ -6,6 +6,19 @@ import types
 const  
   VOWELS* = r"àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
 
+when not defined(release):
+  import logging
+  addHandler(newConsoleLogger())
+  
+template debug*(args: varargs[string, `$`]) =
+  when not defined(release):
+    let pos = instantiationInfo()
+    var dumps = ""
+    for s in args:
+      dumps.add(" ")
+      dumps.add(s)
+    log(lvlDebug, "[$1:$2]$3" % [pos.filename, $pos.line, dumps])
+  
 proc ulen*(s: string): int {.noSideEffect, inline.} =
   return s.runeLen
 
