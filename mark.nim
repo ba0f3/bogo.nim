@@ -32,12 +32,12 @@ proc getMarkChar*(c: Rune): Mark =
   return NO_MARK
 
 proc addMarkChar*(c: Rune, m: Mark): Rune =
-  ## Add mark to a single char.  
+  ## Add mark to a single char.
+  debug "addMarkChar", c, m
   var isUpper = c.isUpper
   var accent = c.getAccentChar
   var ch = unicode.toLower(c).addAccentChar(NONE)
   var newCh = ch
-  echo "^^@ ", ch, " ", newCh, " ", m
   if m == HAT:
     if ch in FAMILY_A:
       newCh = u"â"
@@ -72,19 +72,18 @@ proc addMarkChar*(c: Rune, m: Mark): Rune =
     result = newCh.toUpper
   else:
     result = newCh
+  debug "addMarkAt", result
   
 proc addMarkAt*(s: string, index: int, mark: Mark): string =
   ## Add mark to the index-th character of the given string. Return the new string after applying change.
-  echo "addMarkAt ", s, " ", index, " ", mark
+  debug "addMarkAt", s, index, mark
   if index == -1:
     return s
-
-  echo s{0..index}
-  echo s{index}.toUTF8
-  echo s{index+1..s.ulen}
   result = s{0..index} & $s{index}.addMarkChar(mark) & s{index+1..s.ulen}
+  debug "addMarkAt", result  
   
-proc addMark*(comps: var Components, mark: Mark) =        
+proc addMark*(comps: var Components, mark: Mark) =
+  debug "addMark", comps.debug, mark  
   var rawVowel: string      
   if mark == BAR and comps.hasFirst and comps.firstConsonant.last in FAMILY_D:
     var f = comps.firstConsonant
@@ -96,14 +95,12 @@ proc addMark*(comps: var Components, mark: Mark) =
     var pos: int
     if mark == HAT:
       pos = max(rawVowel.find('a'), rawVowel.find('o'), rawVowel.find('e'))
-      echo "^^^ ", pos 
       comps.vowel = comps.vowel.addMarkAt(pos, mark)
-      echo "^^^ ", comps.vowel
     elif mark == BREVE:
       if rawVowel != "ua":
         comps.vowel = comps.vowel.addMarkAt(rawVowel.find('a'), mark)
     elif mark == HORN:
-      if rawVowel == "ou" or rawVowel == "uoi" or rawVowel == "uou":
+      if rawVowel in @["ou", "uoi", "uou"]:
         var tmp = ""
         for c in comps.vowel{0..2}.runes:
           tmp &= $c.addMarkChar(mark)
@@ -112,15 +109,15 @@ proc addMark*(comps: var Components, mark: Mark) =
       elif rawVowel == "oa":
         comps.vowel = comps.vowel.addMarkAt(1, mark)
       else:
-        pos = max(rawVowel.find('\0'), rawVowel.find('o'))
-        comps.vowel = comps.vowel.addMarkAt(pos, mark)
+        pos = max(0, rawVowel.indexOf(u"o"))
+        comps.vowel = rawVowel.addMarkAt(pos, mark)
             
   if mark == NO_MARK:     
     if rawVowel != comps.vowel.toLower:
       comps.vowel = rawVowel
     elif comps.hasFirst and comps.firstConsonant.last == u"đ":
       comps.firstConsonant = comps.firstConsonant{0..-1} & "d"
-    
+  debug "addMark", comps.debug
 
 proc removeMarkChar*(c: Rune): Rune =
   ## Remove mark from a single character, if any.
