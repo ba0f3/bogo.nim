@@ -10,7 +10,7 @@ when not defined(release):
   import logging
   addHandler(newConsoleLogger())
   
-template debug*(args: varargs[string, `$`]) =
+template debug*(args: varargs[string, `$`]): stmt =
   when not defined(release):
     let pos = instantiationInfo()
     var dumps = ""
