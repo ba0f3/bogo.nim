@@ -7,7 +7,7 @@ import mark
 import types
 import validation
 
-proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMethod {.procVar, exportc: "getTelexdDefinition".} =
+proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMethod {.procVar.} =
   ## Create a definition dictionary for the TELEX input method
   ##
   ## Args:
@@ -39,7 +39,7 @@ proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMeth
     result["}"] = "<Ư"
     result["{"] = "<Ơ"
 
-proc getVniDifinition*(): InputMethod {.procVar, exportc: "getVniDefinition".} =
+proc getVniDifinition*(): InputMethod {.procVar.} =
   result = newStringTable(modeCaseInsensitive)
   result["6"] = "a^ o^ e^"
   result["7"] = "u* o*"
@@ -88,9 +88,10 @@ proc getTransformationList(key: Rune, im: InputMethod, fallbackSeq: string): seq
           result[i] = $trans{0} & $key
     if result.len == 1 and result[0] == "_":
       if fallbackSeq.len >= 2:
-        result = @[]
+        var res: seq[string] = @[]
         for t in getTransformationList(fallbackSeq{-2}, im, fallbackSeq{0..-1}):
-          result.add("_" & t)
+          res.add("_" & t)
+        return res
   else:
     result.add("+" & $key)
   debug "getTransformationlist", result
@@ -338,12 +339,11 @@ proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skip
     result = [$newComps, fallbackSeq]
   debug "processkey", result
       
-proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): string {.exportc: "processSequence".} =
+proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): string =
   ## Convert a key sequence into a Vietnamese string with diacritical marks.
   debug "processSequence", sequence
-  result = ""
-  var text = ""
-  var raw = ""
+  var result, text, raw = ""
+  var pair: StringPair
   for key in sequence.runes:
     if not key.isAcceptedChar(im):
       debug "===", key
@@ -352,19 +352,19 @@ proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): s
       text = ""
       raw = ""
     else:
-      var tmp = processKey(text, key, im, raw, skipNonVNese)
-      text = tmp.first()
-      raw = tmp.second()      
+      pair = processKey(text, key, im, raw, skipNonVNese)
+      text = pair.first()
+      raw = pair.second()      
   result.add(text)
   debug "processSequence", result
 
-proc processSequenceTelex*(sequence: string, skipNonVNese = true, wShorthand = true, bracketsShorthand = true): string {.exportc: "processSequenceTelex".} =
+proc processSequenceTelex*(sequence: cstring, skipNonVNese = true, wShorthand = true, bracketsShorthand = true): cstring {.exportc: "processSequenceTelex".} =
   let im = getTelexDifinition(wShorthand, bracketsShorthand)
-  return processSequence(sequence, im, skipNonVNese)
+  processSequence($sequence, im, skipNonVNese)
 
-proc processSequenceVni*(sequence: string, skipNonVNese = true): string {.exportc: "processSequenceVni".} =
+proc processSequenceVni*(sequence: cstring, skipNonVNese = true): cstring {.exportc: "processSequenceVni".} =
   let im = getVniDifinition()
-  return processSequence(sequence, im, skipNonVNese)
+  processSequence($sequence, im, skipNonVNese)
 
   
 proc handleBackspace(convertedStr, rawSeq = string, im: InputMethod): string =
