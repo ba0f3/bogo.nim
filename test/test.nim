@@ -1,19 +1,16 @@
 
 import strutils
 import unicode
-import bogo
-import accent
-import mark
-import validation
-import types
-import utils
+import ../bogo
+import ../accent
+import ../mark
+import ../validation
+import ../types
+import ../utils
 
 
 echo processSequence("Vieetj Nam quee huowng toio", getTelexDifinition())
 echo processSequence("Vie65t Nam que6 hu7o7ng toi6", getVniDifinition())
-
-quit()
-
 
 
 assert isValidString("éc")
