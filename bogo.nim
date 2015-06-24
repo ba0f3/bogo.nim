@@ -1,6 +1,5 @@
 import unicode except toLower, toUpper
 import strutils except toLower, toUpper, strip
-#import strtabs
 import tables
 import utils
 import accent

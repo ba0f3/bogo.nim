@@ -1,5 +1,4 @@
 from unicode import Rune
-import tables
 
 type
   Accent* = enum
