@@ -7,7 +7,7 @@ import mark
 import types
 import validation
 
-proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMethod {.procVar, exportc: "getTelexdDfinition".} =
+proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMethod {.procVar, exportc: "getTelexdDefinition".} =
   ## Create a definition dictionary for the TELEX input method
   ##
   ## Args:
@@ -357,7 +357,16 @@ proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): s
       raw = tmp.second()      
   result.add(text)
   debug "processSequence", result
-    
+
+proc processSequenceTelex*(sequence: string, skipNonVNese = true, wShorthand = true, bracketsShorthand = true): string {.exportc: "processSequenceTelex".} =
+  let im = getTelexDifinition(wShorthand, bracketsShorthand)
+  return processSequence(sequence, im, skipNonVNese)
+
+proc processSequenceVni*(sequence: string, skipNonVNese = true): string {.exportc: "processSequenceVni".} =
+  let im = getVniDifinition()
+  return processSequence(sequence, im, skipNonVNese)
+
+  
 proc handleBackspace(convertedStr, rawSeq = string, im: InputMethod): string =
   ## Returns a new raw_sequence after a backspace. This raw_sequence should
   ## be pushed back to processSequence().  
