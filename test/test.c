@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
+#ifdef _WIN32
+#define LIB_BOGO "../libbogo.dll"
+#elif __APPLE__
+#define LIB_BOGO "../libbogo.dylib"
+#else
+#define LIB_BOGO "../libbogo.so"
+#endif
 int cmdCount() {
   return 0;
 }
@@ -10,11 +17,12 @@ char* cmdLine() {
   return "";
 }
 
+
 int main() {
   void *handle;
   char* (*processSequence)(const char*, const bool);
   
-  handle = dlopen("../libbogo.so", RTLD_LAZY);
+  handle = dlopen(LIB_BOGO, RTLD_LAZY);
   
   if (!handle) {
     printf("Unable to open library: %s\n", dlerror());

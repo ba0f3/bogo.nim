@@ -1,13 +1,14 @@
 import unicode except toLower, toUpper
 import strutils except toLower, toUpper, strip
-import strtabs
+#import strtabs
+import tables
 import utils
 import accent
 import mark
 import types
 import validation
 
-proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMethod {.procVar.} =
+proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): Table[int, string] {.procVar.} =
   ## Create a definition dictionary for the TELEX input method
   ##
   ## Args:
@@ -18,83 +19,80 @@ proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): InputMeth
   ##
   ## Returns a dictionary to be passed into process_key().
 
-  result = newStringTable(modeCaseInsensitive)
-  result["a"] = "a^"
-  result["o"] = "o^"
-  result["e"] = "e^"
-  result["w"] = "u* o* a+"
-  result["d"] =  "d-"
-  result["f"] =  "\\"
-  result["s"] =  "/"
-  result["r"] =  "?"
-  result["x"] =  "~"
-  result["j"] =  "."
+  result = initTable[int, string]()
+  result[i"a"] = "a^"
+  result[i"o"] = "o^"
+  result[i"e"] = "e^"
+  result[i"d"] =  "d-"
+  result[i"f"] = "\\"
+  result[i"s"] = "/"
+  result[i"r"] = "?"
+  result[i"x"] = "~"
+  result[i"j"] = "."
 
   if wShorthand:
-    result["w"] = result["w"] & " <ư"
+    result[i"w"] = "u* o* a+ <ư"
+  else:
+    result[i"w"] = "u* o* a+"
+
 
   if bracketsShorthand:
-    result["]"] = "<ư"
-    result["["] = "<ơ"
-    result["}"] = "<Ư"
-    result["{"] = "<Ơ"
+    result[i"]"] = "<ư"
+    result[i"["] = "<ơ"
+    result[i"}"] = "<Ư"
+    result[i"{"] = "<Ơ"
 
-proc getVniDifinition*(): InputMethod {.procVar.} =
-  result = newStringTable(modeCaseInsensitive)
-  result["6"] = "a^ o^ e^"
-  result["7"] = "u* o*"
-  result["8"] = "a+"
-  result["9"] =  "d-"
-  result["2"] = "\\"
-  result["1"] = "/"
-  result["3"] = "?"
-  result["4"] = "~"
-  result["5"] = "."
+proc getVniDifinition*(): Table[int, string] {.procVar.} =
+  result = initTable[int, string]()
+  result[i"6"] = "a^ o^ e^"
+  result[i"7"] = "u* o*"
+  result[i"8"] = "a+"
+  result[i"9"] = "d-"
+  result[i"2"] = "\\"
+  result[i"1"] = "/"
+  result[i"3"] = "?"
+  result[i"4"] = "~"
+  result[i"5"] = "."
 
 
-proc isAcceptedChar(c: Rune, im: InputMethod): bool =
+proc isAcceptedChar(c: Rune, im: Table[int, string]): bool =
   if c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ":  
-    return true
-  if im.hasKey(c):
     return true
   if c in VOWELS:
     return true
   if c == u"đ":
     return true
+  if im.hasKey(c.int):
+    return true
   return false
 
-proc getTransformationList(key: Rune, im: InputMethod, fallbackSeq: string): seq[string] =
+proc getTransformationList(key: Rune, im: Table[int, string], fallbackSeq: string): seq[string] =
   ## Return the list of transformations inferred from the entered key. The
   ## map between transform types and keys is given by module
   ## bogo_config (if exists) or by variable simple_telex_im
   ##
   ## if entered key is not in im, return "+key", meaning appending
   ## the entered key to current text
-  debug "getTransformationlist", key, fallbackSeq
   result = @[]
-  var k = unicode.toLower(key)
-  if im.hasKey(k):
-    if ' ' in im[$k]:
-      result = im[$k].split
+  let k = unicode.toLower(key)
+  let kInt = k.int
+  if im.hasKey(kInt):
+    if ' ' in im[kInt]:
+      result = im[kInt].split
     else:
-      result.add(im[$k])
-
+      result = @[im[kInt]]
+      
     for i in 0..result.len-1:
       var trans = result[i]  
-      if trans[0] == '<' and key.isAlpha:
-        if key.isUpper:
-          result[i] = $trans{0} & $key.toUpper
-        else:
-          result[i] = $trans{0} & $key
+      if trans[0] == '<' and k.isAlpha:
+        result[i] = $trans{0} & $key
     if result.len == 1 and result[0] == "_":
       if fallbackSeq.len >= 2:
-        var res: seq[string] = @[]
+        result =  @[]
         for t in getTransformationList(fallbackSeq{-2}, im, fallbackSeq{0..-1}):
-          res.add("_" & t)
-        return res
+          result.add("_" & t)
   else:
     result.add("+" & $key)
-  debug "getTransformationlist", result
 
 proc getAction(trans: string): Action =
   ## Return the action inferred from the transformation `trans`.
@@ -166,7 +164,6 @@ proc reverse(c: var Components, trans: string) =
 
 proc transform(c: var Components, trans: string) =
   ## Transform the given string with transform type trans
-  debug "transform", c.debug, trans
   var action = trans.getAction
 
   if action.kind == ADD_MARK and not c.hasLast and c.vowel.strip in @["oe", "oa"] and trans == "o^":
@@ -233,7 +230,6 @@ proc transform(c: var Components, trans: string) =
     if ac != NONE:
       c.addAccent(NONE)
       c.addAccent(ac)
-  debug "tranform", c.debug
 
 proc canUndo(c: Components, transList: seq[string]): bool =
   ## Return whether a components can be undone with one of the transformation in
@@ -271,8 +267,7 @@ proc canUndo(c: Components, transList: seq[string]): bool =
       return true
   return false
   
-proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skipNonVNese = true): StringPair =
-  debug "processKey", str, key, fallbackSeq  
+proc processKey*(str: string, key: Rune, im: Table[int, string], fallbackSeq = "", skipNonVNese = true): StringPair =
   var fallbackSeq = fallbackSeq
   ## Process a keystroke.
   #proc defaultReturn(): ProcessKeyResult =
@@ -310,7 +305,7 @@ proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skip
       #
       # So we have to clean it up a bit.
       proc isTelexLike(): bool =
-        return "<ư" in im["w"]
+        return "<ư" in im[i"w"]
 
       proc undoneVowelEndsWithU(): bool =
         return newComps.hasVowel and newComps.vowel.last.toLower == u"u"
@@ -337,16 +332,17 @@ proc processKey*(str: string, key: Rune, im: InputMethod, fallbackSeq = "", skip
     result = [fallbackSeq, fallbackSeq]
   else:
     result = [$newComps, fallbackSeq]
-  debug "processkey", result
       
-proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): string =
+proc processSequence*(sequence: string, im: Table[int, string], skipNonVNese = true): string =
   ## Convert a key sequence into a Vietnamese string with diacritical marks.
-  debug "processSequence", sequence
-  var result, text, raw = ""
+  result = ""
+  var text = ""
+  var raw = ""
   var pair: StringPair
   for key in sequence.runes:
+    if key.int == 0:
+      break
     if not key.isAcceptedChar(im):
-      debug "===", key
       result.add(text)
       result.add($key)
       text = ""
@@ -354,9 +350,8 @@ proc processSequence*(sequence: string, im: InputMethod, skipNonVNese = true): s
     else:
       pair = processKey(text, key, im, raw, skipNonVNese)
       text = pair.first()
-      raw = pair.second()      
-  result.add(text)
-  debug "processSequence", result
+      raw = pair.second()
+  result &= text
 
 proc processSequenceTelex*(sequence: cstring, skipNonVNese = true, wShorthand = true, bracketsShorthand = true): cstring {.exportc: "processSequenceTelex".} =
   let im = getTelexDifinition(wShorthand, bracketsShorthand)
@@ -365,9 +360,8 @@ proc processSequenceTelex*(sequence: cstring, skipNonVNese = true, wShorthand = 
 proc processSequenceVni*(sequence: cstring, skipNonVNese = true): cstring {.exportc: "processSequenceVni".} =
   let im = getVniDifinition()
   processSequence($sequence, im, skipNonVNese)
-
   
-proc handleBackspace(convertedStr, rawSeq = string, im: InputMethod): string =
+proc handleBackspace(convertedStr, rawSeq = string, im: Table[int, string]): string =
   ## Returns a new raw_sequence after a backspace. This raw_sequence should
   ## be pushed back to processSequence().  
   let deletedChar = convertedStr.last

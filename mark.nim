@@ -33,7 +33,6 @@ proc getMarkChar*(c: Rune): Mark =
 
 proc addMarkChar*(c: Rune, m: Mark): Rune =
   ## Add mark to a single char.
-  debug "addMarkChar", c, m
   var isUpper = c.isUpper
   var accent = c.getAccentChar
   var ch = unicode.toLower(c).addAccentChar(NONE)
@@ -72,18 +71,14 @@ proc addMarkChar*(c: Rune, m: Mark): Rune =
     result = newCh.toUpper
   else:
     result = newCh
-  debug "addMarkAt", result
   
 proc addMarkAt*(s: string, index: int, mark: Mark): string =
   ## Add mark to the index-th character of the given string. Return the new string after applying change.
-  debug "addMarkAt", s, index, mark
   if index == -1:
     return s
   result = s{0..index} & $s{index}.addMarkChar(mark) & s{index+1..s.ulen}
-  debug "addMarkAt", result  
   
 proc addMark*(comps: var Components, mark: Mark) =
-  debug "addMark", comps.debug, mark  
   var rawVowel: string      
   if mark == BAR and comps.hasFirst and comps.firstConsonant.last in FAMILY_D:
     var f = comps.firstConsonant
@@ -117,7 +112,6 @@ proc addMark*(comps: var Components, mark: Mark) =
       comps.vowel = rawVowel
     elif comps.hasFirst and comps.firstConsonant.last == u"đ":
       comps.firstConsonant = comps.firstConsonant{0..-1} & "d"
-  debug "addMark", comps.debug
 
 proc removeMarkChar*(c: Rune): Rune =
   ## Remove mark from a single character, if any.

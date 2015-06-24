@@ -9,9 +9,9 @@ import ../types
 import ../utils
 
 
+
 echo processSequence("Vieetj Nam quee huowng toio", getTelexDifinition())
 echo processSequence("Vie65t Nam que6 hu7o7ng toi6", getVniDifinition())
-
 
 assert isValidString("éc")
 assert isValidString("ác")

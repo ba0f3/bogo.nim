@@ -50,7 +50,6 @@ proc removeAccentString*(s: string): string =
 
 proc addAccent*(comps: var Components, accent: Accent) =
   ## Add accent to the given components.
-  debug "addAccent", comps.debug, accent
   var vowel = comps.vowel
   if accent == NONE:
     comps.vowel = vowel.removeAccentString
@@ -68,5 +67,4 @@ proc addAccent*(comps: var Components, accent: Accent) =
     else:
       newVowel = $vowel{0} & $vowel{1}.addAccentChar(accent) & vowel{2..vowel.ulen}
     comps.vowel = newVowel
-
-  debug "addAccent", comps.debug
+      

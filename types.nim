@@ -1,5 +1,5 @@
 from unicode import Rune
-import strtabs
+import tables
 
 type
   Accent* = enum
@@ -39,8 +39,6 @@ type
     firstConsonant*: string
     vowel*: string
     lastConsonant*: string
-
-  InputMethod* = StringTableRef
 
 proc newComponents*(f: string = "", v: string = "", la: string = ""): Components =
   new(result)

@@ -10,15 +10,6 @@ when not defined(release):
   import logging
   addHandler(newConsoleLogger())
   
-template debug*(args: varargs[string, `$`]): stmt =
-  when not defined(release):
-    let pos = instantiationInfo()
-    var dumps = ""
-    for s in args:
-      dumps.add(" ")
-      dumps.add(s)
-    log(lvlDebug, "[$1:$2]$3" % [pos.filename, $pos.line, dumps])
-  
 proc ulen*(s: string): int {.noSideEffect, inline.} =
   return s.runeLen
 
@@ -61,6 +52,12 @@ proc u*(s: string): Rune {.compileTime, noSideEffect.} =
   ## u"ô" == u(r"ô")
   s{0}
 
+proc i*(s: string): int {.compileTime, noSideEffect.} =
+  ## Constructor of a literal Rune from single char raw string.
+  ## u"ô" == u(r"ô")
+  int(s{0})
+
+  
 proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
   var c = c.toLower  
   var i = 0
@@ -178,9 +175,4 @@ proc separate*(s: string): Components =
      (result.firstConsonant[0] in "qQ" and result.vowel[0] in "uU")):
     result.firstConsonant.add($result.vowel{0})
     result.vowel = result.vowel{1..result.vowel.ulen}
-    
-proc hasKey*(im: InputMethod, v: Rune): bool {.noSideEffect, inline.} =
-  for k in im.keys():
-    if v in k:
-      return true
-  return false
+
