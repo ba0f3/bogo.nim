@@ -9,7 +9,7 @@ const
 proc ulen*(s: string): int {.noSideEffect, inline.} =
   return s.runeLen
 
-proc `{}`*(s: string, x: int): Rune {.noSideEffect, inline.} =
+proc `{}`*(s: string, x: int): Rune {.noSideEffect.} =
   ## slice operation for strings.
 
   var x = x
@@ -62,14 +62,14 @@ proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
       break;
     i.inc
 
-proc rfind*(s: string, c: Rune): int {.noSideEffect.} =
+proc rfind*(s: string, c: Rune): int {.noSideEffect, inline.} =
   result = -1
   var i = 0
   for r in s.runes:
     if r == c:
       result = i 
   
-proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
+proc contains*(s: string, c: Rune): bool {.noSideEffect, inline.} =
   result = false
   for r in s.runes:
     if r == c:
@@ -107,7 +107,7 @@ proc toUpper*(s: string): string {.noSideEffect, procvar.} =
     i += c.len
 
 
-proc appendComps*(comps: var Components, c: Rune) =
+proc appendComps*(comps: var Components, c: Rune) {.noSideEffect, inline.} =
   ## Append a character to `comps` following this rule: a vowel is added to the
   ## vowel part if there is no last consonant, else to the last consonant part;
   ## a consonant is added to the first consonant part if there is no vowel, and
@@ -136,7 +136,7 @@ proc appendComps*(comps: var Components, c: Rune) =
       # pos = 2
       comps.lastConsonant.add($c)
       
-proc separate*(s: string): Components =
+proc separate*(s: string): Components {.noSideEffect, inline.} =
   ## Separate a string into smaller parts: first consonant (or head), vowel,
   ## last consonant (if any).
   ##

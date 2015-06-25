@@ -40,7 +40,7 @@ type
     vowel*: string
     lastConsonant*: string
 
-proc newComponents*(f: string = "", v: string = "", la: string = ""): Components =
+proc newComponents*(f: string = "", v: string = "", la: string = ""): Components {.noSideEffect, inline.} =
   new(result)
   result.firstConsonant = f
   result.vowel = v
@@ -52,20 +52,20 @@ proc `==`*(x,y: Components): bool {.noSideEffect, inline.} =
 proc debug*(c: Components): string =
   return "[\"" & c.firstConsonant & "\", \"" & c.vowel & "\", \"" & c.lastConsonant & "\"]"
   
-proc copy*(c: Components): Components =
+proc copy*(c: Components): Components {.noSideEffect, inline.} =
   newComponents(c.firstConsonant, c.vowel, c.lastConsonant)
   
 proc hasFirst*(c: Components): bool =
   return not c.firstConsonant.isNil and c.firstConsonant != ""  
 
-proc hasVowel*(c: Components): bool =
+proc hasVowel*(c: Components): bool {.noSideEffect, inline.} =
   return not c.vowel.isNil and c.vowel != ""  
 
-proc hasLast*(c: Components): bool =
+proc hasLast*(c: Components): bool {.noSideEffect, inline.} =
   return not c.lastConsonant.isNil and c.lastConsonant != ""  
 
   
-proc `$`*(c: Components): string =
+proc `$`*(c: Components): string {.noSideEffect, inline.} =
   result = ""
   if c.hasFirst:
     result.add(c.firstConsonant)
@@ -83,7 +83,7 @@ proc second*(p: StringPair): string {.noSideEffect, inline, procVar.} =
 proc `$`*(p: StringPair): string =
   return "[\"" & p[0] & "\", \"" & p[1] & "\"]"    
  
-proc newAction*(k: ActionKind, mark: Mark = NO_MARK, accent = NONE, key = Rune(0)): Action =
+proc newAction*(k: ActionKind, mark: Mark = NO_MARK, accent = NONE, key = Rune(0)): Action {.noSideEffect, inline.} =
   new(result)
   result.kind = k
   case k
