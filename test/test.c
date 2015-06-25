@@ -21,6 +21,7 @@ char* cmdLine() {
 int main() {
   void *handle;
   char* (*processSequence)(const char*, const bool);
+  char* (*test)(const char*);
   
   handle = dlopen(LIB_BOGO, RTLD_LAZY);
   
@@ -30,9 +31,10 @@ int main() {
   }
   //*(void **)(&processSequence) = dlsym(handle, "processSequenceVni");
   processSequence = dlsym(handle, "processSequenceVni");
+  test = dlsym(handle, "test");
 
-  //printf("%s\n", processSequence("To6i la2 nguo*i2 Vie65t Nam", 1));
-  printf("%s\n", processSequence("To6i la2 Vie65t", 1));
+  printf("%s\n", processSequence("To6i la2 ngươi2 Vie6t5 Nam que6", 1));
+  //printf("%s\n", test("To6i la2 ngươi2 Vie6t5 Nam que6"));
 
   dlclose(handle);
   return 0;  

@@ -6,10 +6,6 @@ import types
 const  
   VOWELS* = r"àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
 
-when not defined(release):
-  import logging
-  addHandler(newConsoleLogger())
-  
 proc ulen*(s: string): int {.noSideEffect, inline.} =
   return s.runeLen
 
@@ -53,19 +49,18 @@ proc u*(s: string): Rune {.compileTime, noSideEffect.} =
   s{0}
 
 proc i*(s: string): int {.compileTime, noSideEffect.} =
-  ## Constructor of a literal Rune from single char raw string.
-  ## u"ô" == u(r"ô")
   int(s{0})
 
   
 proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
+  result = -1
   var c = c.toLower  
   var i = 0
   for r in s.runes:
     if r == c:
-      return i
+      result = i
+      break;
     i.inc
-  return -1
 
 proc rfind*(s: string, c: Rune): int {.noSideEffect.} =
   result = -1
@@ -75,12 +70,12 @@ proc rfind*(s: string, c: Rune): int {.noSideEffect.} =
       result = i 
   
 proc contains*(s: string, c: Rune): bool {.noSideEffect.} =
+  result = false
   for r in s.runes:
     if r == c:
-      return true
-  return false
+      result = true
+      break
 
-   
 proc last*(s: string): Rune {.noSideEffect, inline, procVar.} =
   s{-1}
 
@@ -88,10 +83,10 @@ proc isVowel*(c: Rune): bool {.noSideEffect, inline, procVar.} =
   VOWELS.indexOf(c) != -1
 
 proc toLower*(c: Rune): Rune {.noSideEffect, procvar.} =
-  return unicode.toLower(c)
+  unicode.toLower(c)
 
 proc toUpper*(c: Rune): Rune {.noSideEffect, procvar.} =
-  return unicode.toUpper(c)
+  unicode.toUpper(c)
 
 proc toLower*(s: string): string {.noSideEffect, procvar.} =
   result = newString(s.len)
@@ -152,9 +147,9 @@ proc separate*(s: string): Components =
   
   proc atomicSeparate(s, lastChars: string, lastIsVowel: bool): StringPair =
     if s == "" or (lastIsVowel != s.last.isVowel):
-      return [s, lastChars]
+      result = [s, lastChars]
     else:
-      return atomicSeparate(s{0..-1}, s.last.toUTF8 & lastChars, lastIsVowel)
+      result = atomicSeparate(s{0..-1}, s.last.toUTF8 & lastChars, lastIsVowel)
 
   new(result)
   var pair = atomicSeparate(s, "", false)

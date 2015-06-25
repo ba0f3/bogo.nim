@@ -247,19 +247,19 @@ proc canUndo(c: Components, transList: seq[string]): bool =
     actionList.add(x.getAction)   
         
   proc atomicCheck(action: Action): bool =
+    result = false  
     case action.kind
     of ADD_ACCENT:
       if action.accent in accentList:
-        return true
+        result = true
     of ADD_MARK:
       if action.mark in markList:
-        return true
+        result = true
     of ADD_CHAR:
       if action.key == removeAccentChar(c.vowel.last): # ơ, ư
-        return true
+        result = true
     else:
       discard
-    return false
 
   for x in actionList:
     if x.atomicCheck:
@@ -332,15 +332,14 @@ proc processKey*(str: string, key: Rune, im: Table[int, string], fallbackSeq = "
   else:
     result = [$newComps, fallbackSeq]
       
-proc processSequence*(sequence: string, im: Table[int, string], skipNonVNese = true): string =
+proc processSequence*(sequence: string, im: Table[int, string], skipNonVNese = true): string {.exportc: "processSequence".} =
   ## Convert a key sequence into a Vietnamese string with diacritical marks.
   result = ""
   var text = ""
   var raw = ""
   var pair: StringPair
+
   for key in sequence.runes:
-    if key.int == 0:
-      break
     if not key.isAcceptedChar(im):
       result.add(text)
       result.add($key)
@@ -350,15 +349,14 @@ proc processSequence*(sequence: string, im: Table[int, string], skipNonVNese = t
       pair = processKey(text, key, im, raw, skipNonVNese)
       text = pair.first()
       raw = pair.second()
-  result &= text
+  result.add(text)
 
-proc processSequenceTelex*(sequence: cstring, skipNonVNese = true, wShorthand = true, bracketsShorthand = true): cstring {.exportc: "processSequenceTelex".} =
-  let im = getTelexDifinition(wShorthand, bracketsShorthand)
-  processSequence($sequence, im, skipNonVNese)
 
-proc processSequenceVni*(sequence: cstring, skipNonVNese = true): cstring {.exportc: "processSequenceVni".} =
-  let im = getVniDifinition()
-  processSequence($sequence, im, skipNonVNese)
+proc processSequenceTelex*(s: cstring, skipNonVNese = true, wShorthand = true, bracketsShorthand = true): cstring {.exportc: "processSequenceTelex".} =
+  processSequence($s, getTelexDifinition(wShorthand, bracketsShorthand), skipNonVNese)
+
+proc processSequenceVni*(s: cstring, skipNonVNese = true): cstring {.exportc: "processSequenceVni".} =
+  processSequence($s, getVniDifinition(), skipNonVNese)
   
 proc handleBackspace(convertedStr, rawSeq = string, im: Table[int, string]): string =
   ## Returns a new raw_sequence after a backspace. This raw_sequence should
@@ -387,3 +385,4 @@ proc handleBackspace(convertedStr, rawSeq = string, im: Table[int, string]): str
   else:
     let index = rawSeq.rfind(deletedChar)
     return rawSeq{0..index} & rawSeq{index+1..-1}
+    

@@ -1,4 +1,5 @@
 from unicode import Rune
+import utils
 
 type
   Accent* = enum
@@ -47,8 +48,11 @@ proc newComponents*(f: string = "", v: string = "", la: string = ""): Components
 
 proc `==`*(x,y: Components): bool {.noSideEffect, inline.} =
   return x.firstConsonant == y.firstConsonant and x.vowel == y.vowel and x.lastConsonant == y.lastConsonant
+
+proc debug*(c: Components): string =
+  return "[\"" & c.firstConsonant & "\", \"" & c.vowel & "\", \"" & c.lastConsonant & "\"]"
   
-proc copy*(c: Components): Components {.noSideEffect, inline.} =
+proc copy*(c: Components): Components =
   newComponents(c.firstConsonant, c.vowel, c.lastConsonant)
   
 proc hasFirst*(c: Components): bool =
@@ -60,8 +64,6 @@ proc hasVowel*(c: Components): bool =
 proc hasLast*(c: Components): bool =
   return not c.lastConsonant.isNil and c.lastConsonant != ""  
 
-proc debug*(c: Components): string =
-  return "[\"" & c.firstConsonant & "\", \"" & c.vowel & "\", \"" & c.lastConsonant & "\"]"
   
 proc `$`*(c: Components): string =
   result = ""
@@ -91,3 +93,5 @@ proc newAction*(k: ActionKind, mark: Mark = NO_MARK, accent = NONE, key = Rune(0
     result.mark = mark
   else:
     result.key = key
+
+    
