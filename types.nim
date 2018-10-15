@@ -51,20 +51,19 @@ proc `==`*(x,y: Components): bool {.noSideEffect, inline.} =
 
 proc debug*(c: Components): string =
   return "[\"" & c.firstConsonant & "\", \"" & c.vowel & "\", \"" & c.lastConsonant & "\"]"
-  
+
 proc copy*(c: Components): Components {.noSideEffect, inline.} =
   newComponents(c.firstConsonant, c.vowel, c.lastConsonant)
-  
+
 proc hasFirst*(c: Components): bool =
-  return not c.firstConsonant.isNil and c.firstConsonant != ""  
+  return c.firstConsonant.len != 0
 
 proc hasVowel*(c: Components): bool {.noSideEffect, inline.} =
-  return not c.vowel.isNil and c.vowel != ""  
+  return c.vowel.len != 0
 
 proc hasLast*(c: Components): bool {.noSideEffect, inline.} =
-  return not c.lastConsonant.isNil and c.lastConsonant != ""  
+  return c.lastConsonant.len != 0
 
-  
 proc `$`*(c: Components): string {.noSideEffect, inline.} =
   result = ""
   if c.hasFirst:

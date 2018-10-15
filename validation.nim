@@ -8,26 +8,26 @@ import types
 ## or not (i.e. can be pronounced by a Vietnamese speaker).
 
 const
-  CONSONANTS = @["b", "c", "ch", "d", "g", "gh", "gi", "h", "k", "kh", "l", "m",
-                 "n", "ng", "ngh", "nh", "p", "ph", "qu", "r", "s", "t", "th", "tr", "v", "x", "đ"]
-  TERMINAL_CONSONANTS = @["c", "ch", "m", "n", "ng", "nh", "p", "t"]
-  VOWELS = @["a", "ai", "ao", "au", "ay", "e", "eo", "i", "ia", "iu", "iê", "iêu",
-             "o", "oa", "oai", "oao", "oay", "oe", "oeo", "oi", "oo", "oă", "u", "ua",
-             "ui", "uy", "uya", "uyu", "uyê", "uâ", "uây", "uê", "uô", "uôi",
-             "uơ", "y", "yê", "yêu", "â", "âu", "ây", "ê", "êu", "ô", "ôi",
-             "ă", "ơ", "ơi", "ư", "ưa", "ưi", "ưu", "ươ", "ươi", "ươu"]
-  STRIPPED_VOWELS = @["a", "ai", "ao", "au", "ay", "e", "eo", "i", "ia", "iu", "ie", "ieu",
-                      "o", "oa", "oai", "oao", "oay", "oe", "oeo", "oi", "oo", "oa", "u", "ua",
-                      "ui", "uy", "uya", "uyu", "uye", "ua", "uay", "ue", "uo", "uoi",
-                      "uo", "y", "ye", "yeu", "a", "au", "ay", "e", "eu", "o", "oi",
-                      "a", "o", "oi", "u", "ua", "ui", "uu", "uo", "uoi", "uou"]
-  TERMINAL_VOWELS = @["ai", "ao", "au", "ay", "eo", "ia", "iu", "iêu", "oai", "oao", "oay",
+  CONSONANTS = ["b", "c", "ch", "d", "g", "gh", "gi", "h", "k", "kh", "l", "m",
+                "n", "ng", "ngh", "nh", "p", "ph", "qu", "r", "s", "t", "th", "tr", "v", "x", "đ"]
+  TERMINAL_CONSONANTS = ["c", "ch", "m", "n", "ng", "nh", "p", "t"]
+  VOWELS = ["a", "ai", "ao", "au", "ay", "e", "eo", "i", "ia", "iu", "iê", "iêu",
+            "o", "oa", "oai", "oao", "oay", "oe", "oeo", "oi", "oo", "oă", "u", "ua",
+            "ui", "uy", "uya", "uyu", "uyê", "uâ", "uây", "uê", "uô", "uôi",
+            "uơ", "y", "yê", "yêu", "â", "âu", "ây", "ê", "êu", "ô", "ôi",
+            "ă", "ơ", "ơi", "ư", "ưa", "ưi", "ưu", "ươ", "ươi", "ươu"]
+  STRIPPED_VOWELS = ["a", "ai", "ao", "au", "ay", "e", "eo", "i", "ia", "iu", "ie", "ieu",
+                     "o", "oa", "oai", "oao", "oay", "oe", "oeo", "oi", "oo", "oa", "u", "ua",
+                     "ui", "uy", "uya", "uyu", "uye", "ua", "uay", "ue", "uo", "uoi",
+                     "uo", "y", "ye", "yeu", "a", "au", "ay", "e", "eu", "o", "oi",
+                     "a", "o", "oi", "u", "ua", "ui", "uu", "uo", "uoi", "uou"]
+  TERMINAL_VOWELS = ["ai", "ao", "au", "ay", "eo", "ia", "iu", "iêu", "oai", "oao", "oay",
                      "oeo", "oi", "ua", "ui", "uya", "uyu", "uây", "uôi", "uơ", "yêu", "âu",
-                      "ây", "êu", "ôi", "ơi", "ưa", "ưi", "ưu", "ươi", "ươu"]
+                     "ây", "êu", "ôi", "ơi", "ưa", "ưi", "ưu", "ươi", "ươu"]
   
-  STRIPPED_TERMINAL_VOWELS = @["ai", "ao", "au", "ay", "eo", "ia", "iu", "ieu", "oai", "oao", "oay",
-                               "oeo", "oi", "ua", "ui", "uya", "uyu", "uay", "uoi", "yeu", "au",
-                               "ay", "eu", "oi", "oi", "ui", "uu", "uoi", "uou"]
+  STRIPPED_TERMINAL_VOWELS = ["ai", "ao", "au", "ay", "eo", "ia", "iu", "ieu", "oai", "oao", "oay",
+                              "oeo", "oi", "ua", "ui", "uya", "uyu", "uay", "uoi", "yeu", "au",
+                              "ay", "eu", "oi", "oi", "ui", "uu", "uoi", "uou"]
 
 proc hasValidConsonants(c: Components): bool =
   return not ((c.hasFirst and not CONSONANTS.contains(c.firstConsonant)) or
@@ -38,7 +38,9 @@ proc hasValidVowelNonFinal(c: Components): bool =
   ## position can be transformed into a legit vowel.
   var stripped = c.vowel.strip
   if c.hasLast:
-    return stripped in filter(STRIPPED_VOWELS) do (x: string) -> bool: not STRIPPED_TERMINAL_VOWELS.contains(x)
+    return stripped in filter(STRIPPED_VOWELS,
+                              proc(x: string): bool = not STRIPPED_TERMINAL_VOWELS.contains(x)
+    )
   else:
     return stripped in STRIPPED_VOWELS
 

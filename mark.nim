@@ -89,7 +89,7 @@ proc addMark*(comps: var Components, mark: Mark) =
     rawVowel = comps.vowel.removeAccentString.toLower
     var pos: int
     if mark == HAT:
-      pos = max(rawVowel.find('a'), rawVowel.find('o'), rawVowel.find('e'))
+      pos = max(max(rawVowel.find('a'), rawVowel.find('o')), rawVowel.find('e'))
       comps.vowel = comps.vowel.addMarkAt(pos, mark)
     elif mark == BREVE:
       if rawVowel != "ua":
