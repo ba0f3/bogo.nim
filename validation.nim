@@ -24,7 +24,7 @@ const
   TERMINAL_VOWELS = ["ai", "ao", "au", "ay", "eo", "ia", "iu", "iêu", "oai", "oao", "oay",
                      "oeo", "oi", "ua", "ui", "uya", "uyu", "uây", "uôi", "uơ", "yêu", "âu",
                      "ây", "êu", "ôi", "ơi", "ưa", "ưi", "ưu", "ươi", "ươu"]
-  
+
   STRIPPED_TERMINAL_VOWELS = ["ai", "ao", "au", "ay", "eo", "ia", "iu", "ieu", "oai", "oao", "oay",
                               "oeo", "oi", "ua", "ui", "uya", "uyu", "uay", "uoi", "yeu", "au",
                               "ay", "eu", "oi", "oi", "ui", "uu", "uoi", "uou"]
@@ -78,12 +78,12 @@ proc hasValidVowel(c: Components): bool =
   # has_valid_nh_ending()
 
 proc hasValidAccent(c: Components): bool =
-  var akzent = c.vowel.getAccentString  
+  var akzent = c.vowel.getAccentString
 
   # These consonants can only go with ACUTE, DOT accents
   return not ((c.lastConsonant in @["c", "p", "t", "ch"]) and
               not (akzent in @[ACUTE, DOT]))
-    
+
 proc isValidSoundTuple(c: Components, finalForm = true): bool =
   ## Check if a character combination complies to Vietnamese phonology.
   ## The basic idea is that if one can pronunce a sound_tuple then it's valid.
@@ -95,7 +95,7 @@ proc isValidSoundTuple(c: Components, finalForm = true): bool =
   ##    final_form  - whether the tuple represents a complete word
   ## Output:
   ##    True if the tuple seems to be Vietnamese, False otherwise.
-  let cLower = newComponents(c.firstConsonant.toLower, c.vowel.toLower, c.lastConsonant.toLower)
+  let cLower = Components(firstConsonant: c.firstConsonant.toLower, vowel: c.vowel.toLower, lastConsonant: c.lastConsonant.toLower)
   #XXX Words with no vowel are always valid ??
   if not cLower.hasVowel:
     return true
@@ -106,6 +106,6 @@ proc isValidSoundTuple(c: Components, finalForm = true): bool =
 
 proc isValidCombination*(c: Components, finalForm = true): bool =
   return c.isValidSoundTuple(finalForm)
-    
+
 proc isValidString*(s: string, finalForm = true): bool =
   return s.separate.isValidCombination(finalForm)

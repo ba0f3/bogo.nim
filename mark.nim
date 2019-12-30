@@ -71,16 +71,16 @@ proc addMarkChar*(c: Rune, m: Mark): Rune =
     result = newCh.toUpper
   else:
     result = newCh
-  
+
 proc addMarkAt*(s: string, index: int, mark: Mark): string =
   ## Add mark to the index-th character of the given string. Return the new string after applying change.
   if index == -1:
     return s
   result = s{0..index} & $s{index}.addMarkChar(mark) & s{index+1..s.ulen}
-  
+
 proc addMark*(comps: var Components, mark: Mark) =
-  var rawVowel: string      
-  if mark == BAR and comps.hasFirst and comps.firstConsonant.last in FAMILY_D:
+  var rawVowel: string
+  if mark == BAR and comps.hasFirst and comps.firstConsonant.last.toLower in FAMILY_D:
     var f = comps.firstConsonant
     comps.firstConsonant = f.addMarkAt(f.ulen-1, BAR)
   else:
@@ -106,8 +106,8 @@ proc addMark*(comps: var Components, mark: Mark) =
       else:
         pos = max(0, rawVowel.indexOf(u"o"))
         comps.vowel = rawVowel.addMarkAt(pos, mark)
-            
-  if mark == NO_MARK:     
+
+  if mark == NO_MARK:
     if rawVowel != comps.vowel.toLower:
       comps.vowel = rawVowel
     elif comps.hasFirst and comps.firstConsonant.last == u"đ":
@@ -129,7 +129,7 @@ proc removeMarkString*(s: string): string =
       result[i+j] = x
     i += c.len
   result.setLen(i)
-    
+
 proc strip*(s: string): string =
   ## Strip a string of all marks and accents.
   return s.removeAccentString.removeMarkString
@@ -138,7 +138,7 @@ proc isValidMark*(comps: Components, marks: string): bool =
   ## Check whether the mark given by mark_trans is valid to add to the components
   if marks == "*_":
     return true
-  if marks[0] == 'd' and comps.hasFirst and comps.firstConsonant.last in FAMILY_D:
+  if marks[0] == 'd' and comps.hasFirst and comps.firstConsonant.last.toLower in FAMILY_D:
     return true
   elif comps.hasVowel and comps.vowel.strip.toLower.find(marks[0]) != -1:
     return true

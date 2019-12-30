@@ -1,13 +1,9 @@
-import unicode
-import strutils
-import strtabs
+import unicode, strutils, tables
 import types
 
-const  
-  VOWELS* = r"àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
+const VOWELS* = r"àáảãạaằắẳẵặăầấẩẫậâèéẻẽẹeềếểễệêìíỉĩịiòóỏõọoồốổỗộôờớởỡợơùúủũụuừứửữựưỳýỷỹỵy"
 
-proc ulen*(s: string): int {.noSideEffect, inline.} =
-  return s.runeLen
+template ulen*(s: string): int = s.runeLen
 
 proc `{}`*(s: string, x: int): Rune {.noSideEffect.} =
   ## slice operation for strings.
@@ -18,7 +14,7 @@ proc `{}`*(s: string, x: int): Rune {.noSideEffect.} =
 
   if x < 0:
     x = s.ulen + x;
-    
+
   var i = 0
   for c in s.runes:
     if i == x:
@@ -28,15 +24,15 @@ proc `{}`*(s: string, x: int): Rune {.noSideEffect.} =
 proc `..-`*(a, b: int): Slice[int] {.noSideEffect, inline.} =
   result.a = a
   result.b = -b
-    
+
 proc `{}`*(s: string, x: Slice[int]): string {.noSideEffect, inline.} =
-  ## slice operation for unicode strings. 
+  ## slice operation for unicode strings.
   result = ""
 
   var b = x.b
   if b < 0:
     b = s.ulen + b
-  
+
   var i = 0
   for c in s.runes:
     if i >= x.a and i < b:
@@ -48,13 +44,9 @@ proc u*(s: string): Rune {.compileTime, noSideEffect.} =
   ## u"ô" == u(r"ô")
   s{0}
 
-proc i*(s: string): int {.compileTime, noSideEffect.} =
-  int(s{0})
-
-  
 proc indexOf*(s: string, c: Rune): int {.noSideEffect.} =
   result = -1
-  var c = c.toLower  
+  var c = c.toLower
   var i = 0
   for r in s.runes:
     if r == c:
@@ -67,8 +59,8 @@ proc rfind*(s: string, c: Rune): int {.noSideEffect, inline.} =
   var i = 0
   for r in s.runes:
     if r == c:
-      result = i 
-  
+      result = i
+
 proc contains*(s: string, c: Rune): bool {.noSideEffect, inline.} =
   result = false
   for r in s.runes:
@@ -135,7 +127,13 @@ proc appendComps*(comps: var Components, c: Rune) {.noSideEffect, inline.} =
     else:
       # pos = 2
       comps.lastConsonant.add($c)
-      
+
+proc atomicSeparate(s, lastChars: string, lastIsVowel: bool): StringPair =
+  if s.len == 0 or (lastIsVowel != s.last.isVowel):
+    result = (s, lastChars)
+  else:
+    result = atomicSeparate(s{0..-1}, s.last.toUTF8 & lastChars, lastIsVowel)
+
 proc separate*(s: string): Components {.noSideEffect, inline.} =
   ## Separate a string into smaller parts: first consonant (or head), vowel,
   ## last consonant (if any).
@@ -144,20 +142,12 @@ proc separate*(s: string): Components {.noSideEffect, inline.} =
   ## ['t','uo','ng']
   ## >>> separate('ohmyfkinggod')
   ## ['ohmyfkingg','o','d']
-  
-  proc atomicSeparate(s, lastChars: string, lastIsVowel: bool): StringPair =
-    if s == "" or (lastIsVowel != s.last.isVowel):
-      result = [s, lastChars]
-    else:
-      result = atomicSeparate(s{0..-1}, s.last.toUTF8 & lastChars, lastIsVowel)
-
-  new(result)
   var pair = atomicSeparate(s, "", false)
-  result.lastConsonant = pair.second()
-  pair = atomicSeparate(pair.first(), "", true)
-  result.firstConsonant = pair.first()
-  result.vowel = pair.second()
-  
+  result.lastConsonant = pair.second
+  pair = atomicSeparate(pair.first, "", true)
+  result.firstConsonant = pair.first
+  result.vowel = pair.second
+
   if result.hasLast and not result.hasVowel and not result.hasFirst:
     result.firstConsonant = result.lastConsonant  # ['', '', b] -> ['b', '', '']
     result.lastConsonant = ""
@@ -171,3 +161,6 @@ proc separate*(s: string): Components {.noSideEffect, inline.} =
     result.firstConsonant.add($result.vowel{0})
     result.vowel = result.vowel{1..result.vowel.ulen}
 
+proc `+=`*[A,B](a: var Table[A,B], b: Table[A,B]) =
+  for k, v in b.pairs:
+    a[k] = v

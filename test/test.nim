@@ -10,8 +10,8 @@ import ../utils
 
 
 
-echo processSequence("Vieetj Nam quee huowng toio", getTelexDifinition())
-echo processSequence("Vie65t Nam que6 hu7o7ng toi6", getVniDifinition())
+echo processSequenceTelex("Vieetj Nam quee huowng toio")
+echo processSequenceVni("Vie65t Nam que6 hu7o7ng toi6")
 
 assert isValidString("éc")
 assert isValidString("ác")

@@ -7,7 +7,7 @@ import mark
 import types
 import validation
 
-proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): Table[int, string] {.procVar.} =
+const
   ## Create a definition dictionary for the TELEX input method
   ##
   ## Args:
@@ -17,72 +17,37 @@ proc getTelexDifinition*(wShorthand = true, bracketsShorthand = true): Table[int
   ##        shorthand for ươ. Default to True.
   ##
   ## Returns a dictionary to be passed into process_key().
+  TELEX_DIFINITION = {'a': "a^", 'o': "o^", 'e': "e^", 'd':  "d-", 'f': "\\", 's': "/", 'r': "?", 'x': "~", 'j': ".", 'w': "u* o* a+"}.toTable
+  TELEX_DIFINITION_SHORTHAND = {'w': "u* o* a+ <ư"}.toTable
+  TELEX_DIFINITION_BRACKETS_SHORTHAND = {']': "<ư", '[': "<ơ", '}': "<Ư", '{': "<Ơ"}.toTable
 
-  result = initTable[int, string]()
-  result[i"a"] = "a^"
-  result[i"o"] = "o^"
-  result[i"e"] = "e^"
-  result[i"d"] =  "d-"
-  result[i"f"] = "\\"
-  result[i"s"] = "/"
-  result[i"r"] = "?"
-  result[i"x"] = "~"
-  result[i"j"] = "."
-
-  if wShorthand:
-    result[i"w"] = "u* o* a+ <ư"
-  else:
-    result[i"w"] = "u* o* a+"
+  VNI_DIFINITION = {'6': "a^ o^ e^", '7': "u* o*", '8': "a+", '9': "d-", '2': "\\", '1': "/",'3': "?", '4': "~", '5': "."}.toTable
 
 
-  if bracketsShorthand:
-    result[i"]"] = "<ư"
-    result[i"["] = "<ơ"
-    result[i"}"] = "<Ư"
-    result[i"{"] = "<Ơ"
-
-proc getVniDifinition*(): Table[int, string] {.procVar.} =
-  result = initTable[int, string]()
-  result[i"6"] = "a^ o^ e^"
-  result[i"7"] = "u* o*"
-  result[i"8"] = "a+"
-  result[i"9"] = "d-"
-  result[i"2"] = "\\"
-  result[i"1"] = "/"
-  result[i"3"] = "?"
-  result[i"4"] = "~"
-  result[i"5"] = "."
-
-
-proc isAcceptedChar(c: Rune, im: Table[int, string]): bool =
-  if c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ":  
+proc isAcceptedChar(c: Rune, im: Table[char, string]): bool =
+  if c.isAlpha:
     return true
-  if c in VOWELS:
-    return true
-  if c == u"đ":
-    return true
-  if im.hasKey(c.int):
+  if im.hasKey(c.char):
     return true
   return false
 
-proc getTransformationList(key: Rune, im: Table[int, string], fallbackSeq: string): seq[string] =
+proc getTransformationList(key: Rune, im: Table[char, string], fallbackSeq: string): seq[string] =
   ## Return the list of transformations inferred from the entered key. The
   ## map between transform types and keys is given by module
   ## bogo_config (if exists) or by variable simple_telex_im
   ##
   ## if entered key is not in im, return "+key", meaning appending
   ## the entered key to current text
-  result = @[]
   let k = unicode.toLower(key)
-  let kInt = k.int
-  if im.hasKey(kInt):
-    if ' ' in im[kInt]:
-      result = im[kInt].split
+  let c = k.char
+  if im.hasKey(c):
+    if ' ' in im[c]:
+      result = strutils.split(im[c])
     else:
-      result = @[im[kInt]]
-      
+      result = @[im[c]]
+
     for i in 0..result.len-1:
-      var trans = result[i]  
+      var trans = result[i]
       if trans[0] == '<' and k.isAlpha:
         result[i] = $trans{0} & $key
     if result.len == 1 and result[0] == "_":
@@ -99,9 +64,9 @@ proc getAction(trans: string): Action =
   ## An ADD_MARK goes with a Mark
   ## while an ADD_ACCENT goes with an Accent
   if trans[0] == '<' or trans[0] == '+':
-    return newAction(ADD_CHAR, key=trans{1})
+    return Action(kind: ADD_CHAR, key: trans{1})
   if trans[0] == '_':
-    return newAction(UNDO, key=trans{-1})
+    return Action(kind: UNDO, key: trans{-1})
   if trans.len == 2:
     let m = trans[1]
     var mark: Mark
@@ -117,7 +82,7 @@ proc getAction(trans: string): Action =
     else:
       mark = NO_MARK
 
-    return newAction(ADD_MARK, mark=mark)
+    return Action(kind: ADD_MARK, mark: mark)
   else:
     let a = trans[0]
     var accent: Accent
@@ -134,8 +99,8 @@ proc getAction(trans: string): Action =
       accent = DOT
     else:
       accent = NONE
-      
-    return newAction(ADD_ACCENT, accent=accent)      
+
+    return Action(kind: ADD_ACCENT, accent: accent)
 
 proc reverse(c: var Components, trans: string) =
   ## Reverse the effect of transformation 'trans' on 'components'
@@ -165,8 +130,8 @@ proc transform(c: var Components, trans: string) =
   ## Transform the given string with transform type trans
   var action = trans.getAction
 
-  if action.kind == ADD_MARK and not c.hasLast and c.vowel.strip in @["oe", "oa"] and trans == "o^":
-    action = newAction(ADD_CHAR, key=trans{0})
+  if action.kind == ADD_MARK and not c.hasLast and c.vowel in @["oe", "oa"] and trans == "o^":
+    action = Action(kind: ADD_CHAR, key: trans{0})
 
   var vowel = ""
   var ac: Accent
@@ -190,7 +155,7 @@ proc transform(c: var Components, trans: string) =
         vowel = "U"
       else:
         vowel = "u"
-        
+
       c.vowel = vowel & $c.vowel{1}
       c.addAccent(ac)
   elif action.kind == ADD_CHAR:
@@ -244,10 +209,10 @@ proc canUndo(c: Components, transList: seq[string]): bool =
     if x.getMarkChar != NO_MARK:
       markList.add(x.getMarkChar)
   for x in transList:
-    actionList.add(x.getAction)   
-        
+    actionList.add(x.getAction)
+
   proc atomicCheck(action: Action): bool =
-    result = false  
+    result = false
     case action.kind
     of ADD_ACCENT:
       if action.accent in accentList:
@@ -265,25 +230,25 @@ proc canUndo(c: Components, transList: seq[string]): bool =
     if x.atomicCheck:
       return true
   return false
-  
-proc processKey*(str: string, key: Rune, im: Table[int, string], fallbackSeq = "", skipNonVNese = true): StringPair =
+
+proc processKey*(str: string, key: Rune, im: Table[char, string], fallbackSeq = "", skipNonVNese = true): StringPair =
   var fallbackSeq = fallbackSeq
   ## Process a keystroke.
   #proc defaultReturn(): ProcessKeyResult =
   #  return [str & $key, fallbackSeq & $key]
 
   var comps = str.separate()
-  # Find all possible transformations this keypress can generate  
+  # Find all possible transformations this keypress can generate
   var transList = getTransformationList(key, im, fallbackSeq)
-  var newComps = comps.copy
+  var newComps = comps
   # Then apply them one by one
   for t in transList:
     newComps.transform(t)
-    
+
   if newComps == comps:
-    var tmpComps = newComps.copy  
+    var tmpComps = newComps
     # If none of the transformations (if any) work
-    # then this keystroke is probably an undo key.  
+    # then this keystroke is probably an undo key.
     if newComps.canUndo(transList):
       var tmp: seq[string] = @[]
       for trans in transList:
@@ -304,7 +269,7 @@ proc processKey*(str: string, key: Rune, im: Table[int, string], fallbackSeq = "
       #
       # So we have to clean it up a bit.
       proc isTelexLike(): bool =
-        return "<ư" in im[i"w"]
+        return "<ư" in im['w']
 
       proc undoneVowelEndsWithU(): bool =
         return newComps.hasVowel and newComps.vowel.last.toLower == u"u"
@@ -326,13 +291,13 @@ proc processKey*(str: string, key: Rune, im: Table[int, string], fallbackSeq = "
     newComps.appendComps(key)
   else:
     fallbackSeq.add($key)
-    
+
   if skipNonVNese and key.isAlpha and not newComps.isValidCombination(finalForm=false):
-    result = [fallbackSeq, fallbackSeq]
+    result = (fallbackSeq, fallbackSeq)
   else:
-    result = [$newComps, fallbackSeq]
-      
-proc processSequence*(sequence: string, im: Table[int, string], skipNonVNese = true): string {.exportc: "processSequence".} =
+    result = ($newComps, fallbackSeq)
+
+proc processSequence(sequence: string, im: Table[char, string], skipNonVNese = true): string =
   ## Convert a key sequence into a Vietnamese string with diacritical marks.
   result = ""
   var text = ""
@@ -347,20 +312,25 @@ proc processSequence*(sequence: string, im: Table[int, string], skipNonVNese = t
       raw = ""
     else:
       pair = processKey(text, key, im, raw, skipNonVNese)
-      text = pair.first()
-      raw = pair.second()
+      text = pair.first
+      raw = pair.second
   result.add(text)
 
 
 proc processSequenceTelex*(s: cstring, skipNonVNese = true, wShorthand = true, bracketsShorthand = true): cstring {.exportc: "processSequenceTelex".} =
-  processSequence($s, getTelexDifinition(wShorthand, bracketsShorthand), skipNonVNese)
+  var difinition = TELEX_DIFINITION
+  if wShorthand:
+    difinition += TELEX_DIFINITION_SHORTHAND
+  if bracketsShorthand:
+    difinition += TELEX_DIFINITION_BRACKETS_SHORTHAND
+  processSequence($s, difinition, skipNonVNese)
 
 proc processSequenceVni*(s: cstring, skipNonVNese = true): cstring {.exportc: "processSequenceVni".} =
-  processSequence($s, getVniDifinition(), skipNonVNese)
-  
-proc handleBackspace(convertedStr, rawSeq = string, im: Table[int, string]): string =
+  processSequence($s, VNI_DIFINITION, skipNonVNese)
+
+proc handleBackspace*(convertedStr, rawSeq = string, im: Table[char, string]): string =
   ## Returns a new raw_sequence after a backspace. This raw_sequence should
-  ## be pushed back to processSequence().  
+  ## be pushed back to processSequence().
   let deletedChar = convertedStr.last
 
   let accent = deletedChar.getAccentChar
@@ -385,4 +355,4 @@ proc handleBackspace(convertedStr, rawSeq = string, im: Table[int, string]): str
   else:
     let index = rawSeq.rfind(deletedChar)
     return rawSeq{0..index} & rawSeq{index+1..-1}
-    
+
